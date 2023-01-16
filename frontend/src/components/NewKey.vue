@@ -30,20 +30,80 @@ function clickHandler() {
 </script>
 
 <template>
-  <div>
-    <label for="name">Name: </label>
-    <input ref="name" id="name" name="name" type="text" /> <br />
-    <label for="api_key">API Key (public): </label
-    ><input ref="api_key" id="api_key" name="api_key" type="text" /><br />
-    <label for="secret_key">Secret Key (private): </label
-    ><input ref="secret_key" id="secret_key" name="secret_key" type="text" />
-  </div>
-  <div>
+  <div class="form-container">
+    <div class="form-grid">
+      <label for="name">Name: </label>
+      <input ref="name" id="name" name="name" type="text" />
+      <label for="api_key">API Key (public): </label>
+      <input ref="api_key" id="api_key" name="api_key" type="text" />
+      <label for="secret_key">Secret Key (private): </label>
+      <input ref="secret_key" id="secret_key" name="secret_key" type="text" />
+    </div>
     <button @click="clickHandler">Submit</button>
-  </div>
-  <div class="error">
-    {{ errorMessage }}
+    <div class="error-container">
+      <div class="error">
+        {{ errorMessage }}
+      </div>
+    </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.form-grid {
+  display: grid;
+  grid-template-columns: 20% auto;
+  column-gap: 3%;
+}
+.form-container {
+  max-width: 840px;
+  position: relative;
+  padding-bottom: 70px;
+}
+.form-container > button {
+  position: absolute;
+  bottom: 20px;
+  right: 0;
+}
+label {
+  font-size: 16px;
+  font-weight: 600;
+  padding-top: 16px;
+  text-align: right;
+}
+input[type="text"] {
+  padding: 12px 20px;
+  margin: 8px 0;
+  box-sizing: border-box;
+  border: 2px solid #009879;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+input[type="text"]:focus {
+  outline-color: #004235;
+}
+button {
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: 4px;
+  background-color: #009879;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #004235;
+}
+
+.error-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: absolute;
+  bottom: 0;
+}
+.error {
+  text-align: center;
+}
+</style>

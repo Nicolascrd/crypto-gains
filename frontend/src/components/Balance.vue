@@ -5,13 +5,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, defineProps } from "vue";
 import { getBalance } from "./../api";
 
 const balance = ref({});
-
+const { id } = defineProps({
+  id: {
+    type: Number,
+    required: true,
+  },
+});
 onMounted(async () => {
-  const data = await getBalance(1);
+  const data = await getBalance(id);
 
   console.log("data: ", data);
 
