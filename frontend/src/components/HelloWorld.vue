@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import api from "./../api";
 
 defineProps<{ msg: string }>();
-api();
 const count = ref(0);
 </script>
 
