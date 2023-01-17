@@ -5,7 +5,7 @@ const sqlite = require("sqlite3");
 const cors = require("cors");
 const app = express();
 
-app.use(cors({origin: "http://localhost:5173"}));
+app.use(cors({ origin: "http://localhost:5173" }));
 
 const jsonParser = bodyParser.json();
 
@@ -42,6 +42,31 @@ async function clientFromId(id) {
         );
       }
     );
+    db.close();
+  });
+}
+
+async function getName(id) {
+  const db = new sqlite.Database("./db/keys.db", (err) => {
+    if (err) {
+      throw err;
+    }
+    console.log("Connected to the SQLite DB");
+  });
+  return new Promise(function (resolve, reject) {
+    db.all(`SELECT name FROM keys WHERE key_id = ${id}`, [], (err, rows) => {
+      if (err) {
+        return reject(err);
+      }
+      console.log(`retrieved ${rows.length} keys in the local db`);
+      if (rows.length != 1) {
+        return reject("No keys corresponding to ID " + id);
+      }
+      if (rows[0].name == undefined) {
+        return reject("Name can't be undefined");
+      }
+      resolve(rows[0].name);
+    });
     db.close();
   });
 }
@@ -91,15 +116,15 @@ app.post("/add_key", jsonParser, (req, res) => {
   console.log(req.body);
   if (req.body.name == undefined || req.body.name.length < 1) {
     res.status(400).send("name field must be completed");
-    return
+    return;
   }
   if (req.body.public_key == undefined || req.body.public_key.length != 64) {
     res.status(400).send("public_key field must be completed and of length 64");
-    return
+    return;
   }
   if (req.body.secret_key == undefined || req.body.secret_key.length != 64) {
     res.status(400).send("secret_key field must be completed and of length 64");
-    return
+    return;
   }
   db.run(
     `INSERT INTO keys(name, public_key, secret_key) VALUES("${req.body.name}", "${req.body.public_key}", "${req.body.secret_key}")`,
@@ -137,10 +162,33 @@ app.get("/all_keys", (req, res) => {
 app.get("/balance", async (req, res) => {
   const id = parseInt(req.query.id);
   if (isNaN(id) || id == undefined || id < 1) {
-    throw Error("To get Balance, please include valid id in query params");
+    res
+      .status(400)
+      .send("To get Balance, please include valid id in query params");
   }
-  let balance = await getAccount(id);
-  res.json(balance);
+  await getAccount(id).then(
+    (value) => {
+      res.status(200).json(value);
+    },
+    (reason) => {
+      res.status(400).send(reason);
+    }
+  );
+});
+
+app.get("/name", async (req, res) => {
+  const id = parseInt(req.query.id);
+  if (isNaN(id) || id == undefined || id < 1) {
+    throw Error("To get Name, please include valid id in query params");
+  }
+  await getName(id).then(
+    (value) => {
+      res.status(200).send(value);
+    },
+    (reason) => {
+      res.status(404).send(reason);
+    }
+  );
 });
 
 app.listen(3000, () => {

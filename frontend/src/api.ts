@@ -29,6 +29,20 @@ export async function getBalance(id: Number): Promise<{}> {
   return response.json();
 }
 
+export async function getName(id: Number): Promise<string> {
+  const response = await fetch("http://localhost:3000/name?id=" + String(id), {
+    method: "GET",
+    mode: "cors",
+    cache: "no-cache",
+    redirect: "follow",
+    referrerPolicy: "no-referrer",
+  });
+  if (!response.ok) {
+    throw Error("Cannot GET name : " + String(await response.text()));
+  }
+  return response.text();
+}
+
 export async function newKey(data: INewKey): Promise<null> {
   const response = await fetch("http://localhost:3000/add_key", {
     method: "POST",

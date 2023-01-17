@@ -74,26 +74,13 @@ input[type="text"] {
   padding: 12px 20px;
   margin: 8px 0;
   box-sizing: border-box;
-  border: 2px solid #009879;
+  border: 2px solid var(--light-green);
   border-radius: 4px;
   font-size: 16px;
 }
 
 input[type="text"]:focus {
-  outline-color: #004235;
-}
-button {
-  padding: 14px 32px;
-  font-size: 16px;
-  border-radius: 4px;
-  background-color: #009879;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #004235;
+  outline-color: var(--dark-green);
 }
 
 .error-container {

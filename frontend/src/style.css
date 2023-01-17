@@ -9,8 +9,24 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  --light-green: #009879;
+  --dark-green: #004235;
 }
 
 .error {
   color: red;
+}
+
+button {
+  padding: 14px 32px;
+  font-size: 16px;
+  border-radius: 4px;
+  background-color: var(--light-green);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--dark-green);
 }
