@@ -10,7 +10,21 @@ export interface IKey {
   public_key: string;
 }
 
-export async function getBalance(id: Number): Promise<{}> {
+export interface IAccountBalance {
+  amounts: Record<string, number>;
+  tickers: Array<string>;
+}
+
+export async function getBalance(id: Number): Promise<IAccountBalance> {
+  /*
+  {
+    prices: {
+      "BNB": "xxx",
+      "BTC": "xxx"
+    },
+    tickers: ["BTC", "BNB"]
+  }
+  */
   const response = await fetch(
     "http://localhost:3000/balance?id=" + String(id),
     {
@@ -25,6 +39,26 @@ export async function getBalance(id: Number): Promise<{}> {
     throw Error(
       "Cannot GET balance informations : " + String(await response.text())
     );
+  }
+  return response.json();
+}
+
+export async function getPrices(
+  arr: Array<string>
+): Promise<Record<string, number>> {
+  const response = await fetch("http://localhost:3000/prices", {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    redirect: "follow",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    referrerPolicy: "no-referrer",
+    body: JSON.stringify(arr.filter((val) => !val.includes("USD"))),
+  });
+  if (!response.ok) {
+    throw Error("Cannot POST prices: " + String(await response.text()));
   }
   return response.json();
 }

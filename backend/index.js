@@ -78,7 +78,10 @@ async function getAccount(id) {
   } catch (err) {
     throw err;
   }
-  res = {};
+  res = {
+    amounts: {},
+    tickers: [],
+  };
   return await client.getAccountInformation().then((result) => {
     console.log(result.balances);
     result.balances.forEach((el) => {
@@ -88,16 +91,18 @@ async function getAccount(id) {
         if (el.asset.substring(0, 2) == "LD" && el.asset.length > 3) {
           // lended asset counted as asset
           let ass = el.asset.substring(2);
-          if (ass in res) {
-            res[ass] += fr + lock;
+          if (ass in res.amounts) {
+            res.amounts[ass] += fr + lock;
           } else {
-            res[ass] = fr + lock;
+            res.amounts[ass] = fr + lock;
+            res.tickers.push(ass);
           }
         } else {
-          if (el.asset in res) {
-            res[el.asset] += fr + lock;
+          if (el.asset in res.amounts) {
+            res.amounts[el.asset] += fr + lock;
           } else {
-            res[el.asset] = fr + lock;
+            res.amounts[el.asset] = fr + lock;
+            res.tickers.push(el.asset);
           }
         }
       }
@@ -105,6 +110,43 @@ async function getAccount(id) {
     return res;
   });
 }
+
+app.post("/prices", jsonParser, async (req, res) => {
+  console.log(req.body);
+  if (
+    !Array.isArray(req.body) ||
+    req.body == undefined ||
+    req.body.length < 1
+  ) {
+    res.status(400).send("body must be an array of tickers");
+    return;
+  }
+
+  const client = new MainClient({});
+  const promises = [];
+
+  for (let t of req.body) {
+    promises.push(client.getAvgPrice({ symbol: t + "USDT" }));
+  }
+  await Promise.all(promises)
+    .then(
+      (values) => {
+        const pricesMap = {};
+        values.forEach((value, index) => {
+          pricesMap[req.body[index]] = parseFloat(value.price);
+        });
+        res.status(200).json(pricesMap);
+      },
+      (reason) => {
+        res.status(400).send(reason.message);
+        return;
+      }
+    )
+    .catch((reason) => {
+      res.status(400).send(reason.message);
+      return;
+    });
+});
 
 app.post("/add_key", jsonParser, (req, res) => {
   const db = new sqlite.Database("./db/keys.db", (err) => {

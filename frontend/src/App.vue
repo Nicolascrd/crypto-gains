@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import AllKeys from "./components/AllKeys.vue";
 import Balance from "./components/Balance.vue";
 import NewKey from "./components/NewKey.vue";
