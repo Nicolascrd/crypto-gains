@@ -1,5 +1,4 @@
 <template>
-  <button @click="$emit('return')">RETURN</button>
   <h1>Current Balance : {{ accountName }}</h1>
   <div>
     Display Stablecoins:
@@ -29,6 +28,11 @@
           <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
           <td>{{ decimalRound(bal, 2) }}</td>
         </tr>
+        <tr>
+          <td>Total</td>
+          <td>-</td>
+          <td>{{ totalDollarValue }}</td>
+        </tr>
       </table>
     </div>
     <div class="chart">
@@ -44,23 +48,16 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "vue-chartjs";
 import { options, colors } from "./chartConfig";
 import { decimalRound } from "./../utils";
+import { mainStore } from "../store";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-defineEmits(["return"]);
 
 const balance = ref({} as Record<string, number>);
 const prices = ref({} as Record<string, number>);
 const stablecoinsBalance = ref({} as Record<string, number>);
 const accountName = ref("");
 const displayStablecoins = ref(false);
-
-const { id } = defineProps({
-  id: {
-    type: Number,
-    required: true,
-  },
-});
+const { id } = mainStore();
 
 onMounted(async () => {
   const data = await getBalance(id);
@@ -127,6 +124,20 @@ const datasets = computed(() => {
       data: data.value.values,
     },
   ];
+});
+
+const totalDollarValue = computed(() => {
+  let res = 0;
+  console.log("prices, balance", prices.value, balance.value);
+  for (let bal in balance.value) {
+    res += balance.value[bal] * prices.value[bal];
+  }
+  if (displayStablecoins.value) {
+    for (let stable in stablecoinsBalance.value) {
+      res += stablecoinsBalance.value[stable];
+    }
+  }
+  return res;
 });
 </script>
 

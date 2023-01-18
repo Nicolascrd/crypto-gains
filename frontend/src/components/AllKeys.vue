@@ -41,27 +41,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-table {
-  border-collapse: collapse;
-  margin: 25px 0;
-  font-size: 0.9em;
-  font-family: sans-serif;
-  min-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-}
-table thead th {
-  background-color: #009879;
-  color: #ffffff;
-  text-align: left;
-}
-table th,
-table td {
-  padding: 12px 15px;
-}
 td {
   cursor: pointer;
-}
-tr:hover {
-  background-color: #00987a8e;
 }
 </style>
