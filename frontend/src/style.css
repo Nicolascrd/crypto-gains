@@ -51,3 +51,14 @@ table td {
 tr:hover {
   background-color: #00987a8e;
 }
+
+.sidebar-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100%;
+}
+.page-container {
+  margin-left: 200px;
+}

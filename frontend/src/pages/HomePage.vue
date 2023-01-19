@@ -28,11 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import AllKeys from "../components/AllKeys.vue";
-import Balance from "../components/Balance.vue";
 import NewKey from "../components/NewKey.vue";
-import { mainStore } from "../store";
+import { useStore } from "../store";
 import { router, paths } from "./../router";
 
 enum Status {
@@ -42,15 +41,17 @@ enum Status {
 
 const status = ref(Status.Regular);
 
-const { changeId, id } = mainStore();
+const store = useStore();
+const { changeId } = store;
 
-function updateKeyId(id: number) {
-  changeId(id);
+onMounted(() => {
+  changeId(0);
+});
+
+function updateKeyId(num: number) {
+  changeId(num);
   router.push(paths.balance);
 }
-
 </script>
 
-<style>
-
-</style>
+<style></style>

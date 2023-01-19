@@ -48,7 +48,8 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "vue-chartjs";
 import { options, colors } from "./chartConfig";
 import { decimalRound } from "./../utils";
-import { mainStore } from "../store";
+import { useStore } from "../store";
+import { storeToRefs } from "pinia";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -57,10 +58,11 @@ const prices = ref({} as Record<string, number>);
 const stablecoinsBalance = ref({} as Record<string, number>);
 const accountName = ref("");
 const displayStablecoins = ref(false);
-const { id } = mainStore();
+const store = useStore();
+const { id } = storeToRefs(store);
 
 onMounted(async () => {
-  const data = await getBalance(id);
+  const data = await getBalance(id.value);
   const stablecoins = {} as Record<string, number>;
   for (let am in data.amounts) {
     if (am.includes("USD")) {
@@ -70,7 +72,7 @@ onMounted(async () => {
   }
 
   const allPrices = await getPrices(data.tickers);
-  const name = await getName(id);
+  const name = await getName(id.value);
 
   if (data) {
     balance.value = data.amounts;
@@ -142,7 +144,7 @@ const totalDollarValue = computed(() => {
 </script>
 
 <style scoped>
-/* The switch - the box around the slider */
+/* The switch - the box around the sl er */
 .switch {
   position: relative;
   display: inline-block;
