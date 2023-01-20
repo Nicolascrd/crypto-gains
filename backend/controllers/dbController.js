@@ -4,7 +4,7 @@ module.exports = class dbController {
   constructor() {
     let db;
     try {
-      db = new sqlite.Database("./db/keys.db", (err) => {
+      db = new sqlite.Database("./db/cryptoGains.db", (err) => {
         if (err) {
           throw err;
         }

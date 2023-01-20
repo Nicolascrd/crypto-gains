@@ -1,0 +1,4 @@
+CREATE TABLE keys (key_id INTEGER PRIMARY KEY, 
+name TEXT NOT NULL,
+public_key TEXT NOT NULL,
+secret_key TEXT NOT NULL);
