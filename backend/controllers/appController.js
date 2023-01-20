@@ -1,20 +1,50 @@
 const { getAccount, getPrices } = require("./binanceController");
 const dbController = require("./dbController");
+// An import assertion in a dynamic import
+const params = {
+  exchanges: ["Binance", "Kraken"],
+};
 
 exports.addKey = (req, res) => {
-  console.log(req.body);
+  if (
+    req.body.exchange == undefined ||
+    !params.exchanges.includes(req.body.exchange)
+  ) {
+    res
+      .status(400)
+      .send(
+        "exchange field must be completed and in " + String(params.exchanges)
+      );
+    return;
+  }
   if (req.body.name == undefined || req.body.name.length < 1) {
     res.status(400).send("name field must be completed");
     return;
   }
-  if (req.body.public_key == undefined || req.body.public_key.length != 64) {
-    res.status(400).send("public_key field must be completed and of length 64");
-    return;
+  if (req.body.exchange == "Binance") {
+    if (req.body.public_key == undefined || req.body.public_key.length != 64) {
+      res
+        .status(400)
+        .send("public_key field must be completed and of length 64");
+      return;
+    }
+    if (req.body.secret_key == undefined || req.body.secret_key.length != 64) {
+      res
+        .status(400)
+        .send("secret_key field must be completed and of length 64");
+      return;
+    }
+  } else if (req.body.exchange == "Kraken") {
+    if (req.body.public_key == undefined) {
+      res.status(400).send("public_key field must be completed");
+      return;
+    }
+    if (req.body.secret_key == undefined) {
+      res.status(400).send("secret_key field must be completed");
+      return;
+    }
   }
-  if (req.body.secret_key == undefined || req.body.secret_key.length != 64) {
-    res.status(400).send("secret_key field must be completed and of length 64");
-    return;
-  }
+
   let db;
   try {
     db = new dbController();

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { newKey, INewKey } from "../api";
+import { newKey, INewKey, Exchange } from "../api";
 
 const name = ref<HTMLInputElement | null>(null);
 const api_key = ref<HTMLInputElement | null>(null);
 const secret_key = ref<HTMLInputElement | null>(null);
+const binance = ref<HTMLInputElement | null>(null);
+const kraken = ref<HTMLInputElement | null>(null);
 const errorMessage = ref<String>("");
 
 function clickHandler() {
@@ -17,10 +19,19 @@ function clickHandler() {
   if (secret_key.value == undefined) {
     return;
   }
+  if (!kraken.value?.checked && !binance.value?.checked) {
+    errorMessage.value = "Please select an exchange";
+    return;
+  }
+  let exchange: Exchange = "Binance";
+  if (kraken.value?.checked) {
+    exchange = "Kraken";
+  }
   const data: INewKey = {
     name: name.value?.value,
     public_key: api_key.value?.value,
     secret_key: secret_key.value?.value,
+    exchange: exchange,
   };
   newKey(data).catch((err) => {
     console.error("Insert failed: " + err);
@@ -32,6 +43,13 @@ function clickHandler() {
 <template>
   <div class="form-container">
     <div class="form-grid">
+      <label>Exchange: </label>
+      <div class="wrapper">
+        <input ref="binance" id="binance" name="exchange" type="radio" />
+        <input ref="kraken" id="kraken" name="exchange" type="radio" />
+        <label for="binance" class="option binance">Binance</label>
+        <label for="kraken" class="option kraken">Kraken</label>
+      </div>
       <label for="name">Name: </label>
       <input ref="name" id="name" name="name" type="text" />
       <label for="api_key">API Key (public): </label>
@@ -77,6 +95,42 @@ input[type="text"] {
   border: 2px solid var(--light-green);
   border-radius: 4px;
   font-size: 16px;
+}
+
+input[type="radio"] {
+  display: none;
+}
+.wrapper {
+  display: inline-flex;
+  background: #fff;
+  align-items: center;
+  height: 80px;
+  justify-content: space-evenly;
+  border-radius: 5px;
+  padding: 20px 15px;
+}
+.wrapper .option {
+  background: #fff;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  margin: 0 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 0 10px;
+  border: 2px solid lightgrey;
+  transition: all 0.3s ease;
+}
+
+#binance:checked:checked ~ .binance {
+  border-color: var(--binance-yellow);
+  background: var(--binance-yellow);
+}
+#kraken:checked:checked ~ .kraken {
+  border-color: var(--kraken-blue);
+  background: var(--kraken-blue);
 }
 
 input[type="text"]:focus {

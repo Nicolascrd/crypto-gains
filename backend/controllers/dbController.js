@@ -19,9 +19,9 @@ module.exports = class dbController {
     this.db.close();
   }
   insertInto(newKey) {
-    // object with fields: name, public_key, private_key
+    // object with fields: exchange, name, public_key, private_key
     this.db.run(
-      `INSERT INTO keys(name, public_key, secret_key) VALUES("${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
+      `INSERT INTO keys(exchange, name, public_key, secret_key) VALUES("${newKey.exchange}", "${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
       [],
       function (err) {
         if (err) {
@@ -54,13 +54,17 @@ module.exports = class dbController {
   allKeys() {
     let db = this.db;
     return new Promise(function (resolve, reject) {
-      db.all("SELECT key_id, name, public_key FROM keys", [], (err, rows) => {
-        if (err) {
-          return reject(err);
+      db.all(
+        "SELECT key_id, exchange, name, public_key FROM keys",
+        [],
+        (err, rows) => {
+          if (err) {
+            return reject(err);
+          }
+          console.log(`retrieved ${rows.length} keys in the local db`);
+          resolve(rows);
         }
-        console.log(`retrieved ${rows.length} keys in the local db`);
-        resolve(rows);
-      });
+      );
     });
   }
   publicAndSecretKey(id) {

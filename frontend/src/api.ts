@@ -1,13 +1,17 @@
+export type Exchange = "Binance" | "Kraken";
+
 export interface INewKey {
   name: string;
   public_key: string;
   secret_key: string;
+  exchange: Exchange;
 }
 
 export interface IKey {
   key_id: string;
   name: string;
   public_key: string;
+  exchange: Exchange;
 }
 
 export interface IAccountBalance {

@@ -9,6 +9,7 @@
 
 <script setup lang="ts">
 import SideBar from "../components/SideBar.vue";
+import Deposits from "../components/Deposits.vue";
 import { onMounted } from "vue";
 import { useStore } from "../store";
 import { router, paths } from "./../router";

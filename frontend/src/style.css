@@ -11,6 +11,8 @@
   -webkit-text-size-adjust: 100%;
   --light-green: #009879;
   --dark-green: #004235;
+  --binance-yellow: #f3ba2f;
+  --kraken-blue: #5848d5;
 }
 
 .error {

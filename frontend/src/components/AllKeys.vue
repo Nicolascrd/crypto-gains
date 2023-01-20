@@ -4,11 +4,13 @@
     <table>
       <thead>
         <th>Key ID</th>
+        <th>Exchange</th>
         <th>Key Name</th>
         <th>Public Key</th>
       </thead>
       <tr v-for="row of allKeys" @click="$emit('updateKeyId', row.key_id)">
         <td>{{ row.key_id }}</td>
+        <td>{{ row.exchange }}</td>
         <td>{{ row.name }}</td>
         <td>{{ row.public_key }}</td>
       </tr>
