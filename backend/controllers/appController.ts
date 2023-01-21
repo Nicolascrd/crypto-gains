@@ -1,13 +1,15 @@
-const { getAccount, getPrices } = require("./binanceController");
-const {
+import { getAccount, getPrices } from "./binanceController";
+
+import {
   insertInto,
-  getName,
+  getNameFromId,
   getExchange,
   allKeys,
-  publicAndSecretKey,
   addRecords,
-} = require("./dbController");
-const { parse, transform } = require("csv/sync");
+  IDepositRecord,
+} from "./dbController";
+import { parse, transform } from "csv/sync";
+import { Request, Response } from "express";
 
 // An import assertion in a dynamic import
 const params = {
@@ -24,10 +26,10 @@ const params = {
     LUNA2: "LUNA",
     ZUSD: "USD",
     ZEUR: "EUR",
-  },
+  } as Record<string, string>,
 };
 
-exports.addKey = (req, res) => {
+export const addKey = (req: Request, res: Response) => {
   if (
     req.body.exchange == undefined ||
     !params.exchanges.includes(req.body.exchange)
@@ -67,7 +69,6 @@ exports.addKey = (req, res) => {
     }
   }
 
-  let db;
   try {
     insertInto(req.body);
   } catch (e) {
@@ -77,7 +78,13 @@ exports.addKey = (req, res) => {
   res.sendStatus(200);
 };
 
-exports.getName = async (req, res) => {
+export const getName = async (req: Request, res: Response) => {
+  if (typeof req.query.id != "string") {
+    res
+      .status(400)
+      .send("To get Name, please include valid id in query params");
+    return;
+  }
   const id = parseInt(req.query.id);
   if (isNaN(id) || id == undefined || id < 1) {
     res
@@ -86,7 +93,7 @@ exports.getName = async (req, res) => {
     return;
   }
   try {
-    await getName(id).then(
+    await getNameFromId(id).then(
       (value) => {
         res.status(200).send(value);
         return;
@@ -102,7 +109,7 @@ exports.getName = async (req, res) => {
   }
 };
 
-exports.getAllKeys = async (req, res) => {
+export const getAllKeys = async (req: Request, res: Response) => {
   try {
     await allKeys().then(
       (value) => {
@@ -120,8 +127,14 @@ exports.getAllKeys = async (req, res) => {
   }
 };
 
-exports.getBalance = async (req, res) => {
+export const getBalance = async (req: Request, res: Response) => {
   let id = 0;
+  if (typeof req.query.id != "string") {
+    res
+      .status(400)
+      .send("To get Name, please include valid id in query params");
+    return;
+  }
   try {
     id = parseInt(req.query.id);
   } catch (e) {
@@ -146,7 +159,7 @@ exports.getBalance = async (req, res) => {
   );
 };
 
-exports.prices = async (req, res) => {
+export const prices = async (req: Request, res: Response) => {
   if (
     !Array.isArray(req.body) ||
     req.body == undefined ||
@@ -165,8 +178,14 @@ exports.prices = async (req, res) => {
   );
 };
 
-exports.upload = async (req, res) => {
+export const upload = async (req: Request, res: Response) => {
   let id = 0;
+  if (typeof req.query.id != "string") {
+    res
+      .status(400)
+      .send("To get Name, please include valid id in query params");
+    return;
+  }
   try {
     id = parseInt(req.query.id);
   } catch (e) {
@@ -185,7 +204,6 @@ exports.upload = async (req, res) => {
       return;
     }
   );
-  console.log("echange", exchange);
   if (exchange == "Kraken") {
     await uploadKraken(req, res, id);
   }
@@ -194,12 +212,12 @@ exports.upload = async (req, res) => {
   }
 };
 
-const uploadKraken = async (req, res, id) => {
+const uploadKraken = async (req: Request, res: Response, id: number) => {
   /*
   txid,               refid,                time,               type,   subtype, aclass,  asset, amount, fee, balance
   LCA6LV-5E7UH-47F36I,QCCTI4Q-ZKBGSL-T2XNVB,2020-02-25 02:13:24,deposit,        ,currency,ZEUR,  100,    0,   100
   */
-  let rawRecords = parse(req.body);
+  let rawRecords = parse(req.body) as string[];
   const expectedCols = [
     "txid",
     "refid",
@@ -235,15 +253,16 @@ const uploadKraken = async (req, res, id) => {
           ? params.krakenAssets[data[6]]
           : data[6],
         change: parseFloat(data[7]),
-      };
+      } as IDepositRecord;
     }
   );
 
   console.log(refinedRecords);
   try {
     addRecords(refinedRecords);
-  } catch (e) {
-    res.status(500).send("Cannot add records to db : " + e.message());
+  } catch (e: any) {
+    res.status(500).send("Cannot add records to db");
+    console.error(e);
     return;
   }
 
@@ -251,4 +270,4 @@ const uploadKraken = async (req, res, id) => {
   return;
 };
 
-const uploadBinance = async (req, res) => {};
+const uploadBinance = async (req: Request, res: Response) => {};

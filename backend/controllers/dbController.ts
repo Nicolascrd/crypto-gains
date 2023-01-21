@@ -1,12 +1,28 @@
-const sqlite = require("sqlite3");
+import { Database } from "sqlite3";
 
-exports.insertInto = (newKey) => {
+export type Exchange = "Kraken" | "Binance";
+
+export interface INewKey {
+  exchange: Exchange;
+  name: string;
+  public_key: string;
+  secret_key: string;
+}
+
+export interface IDepositRecord {
+  key_id: number;
+  utc_time: number;
+  asset: string;
+  change: number;
+}
+
+export const insertInto = (newKey: INewKey) => {
   // object with fields: exchange, name, public_key, private_key
   let db = newDbConnector();
   db.run(
     `INSERT INTO keys(exchange, name, public_key, secret_key) VALUES("${newKey.exchange}", "${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
     [],
-    function (err) {
+    function (err: Error) {
       if (err) {
         console.error("Failed inserting new row in DB");
         throw err;
@@ -18,9 +34,9 @@ exports.insertInto = (newKey) => {
   db.close();
 };
 
-exports.getName = (id) => {
+export const getNameFromId = (id: number) => {
   let db = newDbConnector();
-  return new Promise(function (resolve, reject) {
+  return new Promise<string>(function (resolve, reject) {
     db.all(`SELECT name FROM keys WHERE key_id = ${id}`, [], (err, rows) => {
       if (err) {
         return reject(err);
@@ -38,13 +54,13 @@ exports.getName = (id) => {
   });
 };
 
-exports.getExchange = (id) => {
+export const getExchange = (id: number) => {
   let db = newDbConnector();
-  return new Promise(function (resolve, reject) {
+  return new Promise<Exchange>(function (resolve, reject) {
     db.all(
       `SELECT exchange FROM keys WHERE key_id = ${id}`,
       [],
-      (err, rows) => {
+      (err: Error, rows: any[]) => {
         if (err) {
           console.error(err);
           return reject(err);
@@ -60,13 +76,13 @@ exports.getExchange = (id) => {
   });
 };
 
-exports.allKeys = () => {
+export const allKeys = () => {
   let db = newDbConnector();
-  return new Promise(function (resolve, reject) {
+  return new Promise<any[]>(function (resolve, reject) {
     db.all(
       "SELECT key_id, exchange, name, public_key FROM keys",
       [],
-      (err, rows) => {
+      (err: Error, rows: any[]) => {
         if (err) {
           return reject(err);
         }
@@ -78,14 +94,19 @@ exports.allKeys = () => {
   });
 };
 
-exports.publicAndSecretKey = (id) => {
+export interface IPublicAndSecretKey {
+  public_key: string;
+  secret_key: string;
+}
+
+export const publicAndSecretKey = (id: number) => {
   let db = newDbConnector();
 
-  return new Promise(function (resolve, reject) {
+  return new Promise<IPublicAndSecretKey>(function (resolve, reject) {
     db.all(
       `SELECT public_key, secret_key FROM keys WHERE key_id = ${id}`,
       [],
-      (err, rows) => {
+      (err: Error, rows: IPublicAndSecretKey[]) => {
         if (err) {
           return reject(err);
         }
@@ -108,17 +129,17 @@ exports.publicAndSecretKey = (id) => {
   });
 };
 
-exports.addRecords = (recordsArr) => {
+export const addRecords = (recordsArr: IDepositRecord[]) => {
   let db = newDbConnector();
 
   let str =
     "INSERT INTO depositsWithdrawals(account, utc_time, asset, change) VALUES";
-  for (rec of recordsArr) {
+  for (let rec of recordsArr) {
     str += `(${rec.key_id}, ${rec.utc_time}, "${rec.asset}", ${rec.change}),`;
   }
   str = str.slice(0, str.length - 1) + ";";
   console.log("input:", str);
-  db.run(str, [], (err) => {
+  db.run(str, [], (err: Error) => {
     if (err) {
       console.error("Failed inserting rows in DB");
       throw err;
@@ -132,9 +153,9 @@ exports.addRecords = (recordsArr) => {
 };
 
 const newDbConnector = () => {
-  let db;
+  let db: Database;
   try {
-    db = new sqlite.Database("./db/cryptoGains.db", (err) => {
+    db = new Database("./db/cryptoGains.db", (err: Error | null) => {
       if (err) {
         throw err;
       }

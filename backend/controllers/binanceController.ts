@@ -1,8 +1,8 @@
-const { MainClient } = require("binance");
-const { publicAndSecretKey } = require("./dbController");
+import { MainClient } from "binance";
+import { publicAndSecretKey } from "./dbController";
 
-async function clientFromId(id) {
-  let public_key, secret_key;
+async function clientFromId(id: number) {
+  let public_key: string, secret_key: string;
   try {
     ({ public_key, secret_key } = await publicAndSecretKey(id));
   } catch (e) {
@@ -14,22 +14,23 @@ async function clientFromId(id) {
   });
 }
 
-exports.getAccount = async (id) => {
+export const getAccount = async (id: number) => {
   let client;
   try {
     client = await clientFromId(id);
   } catch (err) {
     throw err;
   }
-  res = {
-    amounts: {},
-    tickers: [],
+  let res = {
+    amounts: {} as Record<string, number>,
+    tickers: [] as string[],
   };
   return await client.getAccountInformation().then((result) => {
     console.log(result.balances);
     result.balances.forEach((el) => {
-      let fr = parseFloat(el.free);
-      let lock = parseFloat(el.locked);
+      let fr = typeof el.free == "number" ? el.free : parseFloat(el.free);
+      let lock =
+        typeof el.locked == "number" ? el.locked : parseFloat(el.locked);
       if (fr > 0 || lock > 0) {
         if (el.asset.substring(0, 2) == "LD" && el.asset.length > 3) {
           // lended asset counted as asset
@@ -54,7 +55,7 @@ exports.getAccount = async (id) => {
   });
 };
 
-exports.getPrices = async (tickers) => {
+export const getPrices = async (tickers: string[]) => {
   const client = new MainClient({});
   const promises = [];
 
@@ -64,10 +65,13 @@ exports.getPrices = async (tickers) => {
   return Promise.all(promises)
     .then(
       (values) => {
-        const pricesMap = {};
+        const pricesMap = {} as Record<string, number>;
         console.log(values, tickers);
         values.forEach((value, index) => {
-          pricesMap[tickers[index]] = parseFloat(value.price);
+          pricesMap[tickers[index]] =
+            typeof value.price == "number"
+              ? value.price
+              : parseFloat(value.price);
         });
         return pricesMap;
       },
