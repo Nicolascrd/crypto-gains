@@ -1,8 +1,30 @@
 const { getAccount, getPrices } = require("./binanceController");
-const dbController = require("./dbController");
+const {
+  insertInto,
+  getName,
+  getExchange,
+  allKeys,
+  publicAndSecretKey,
+  addRecords,
+} = require("./dbController");
+const { parse, transform } = require("csv/sync");
+
 // An import assertion in a dynamic import
 const params = {
   exchanges: ["Binance", "Kraken"],
+  krakenDeposits: ["deposit", "withdrawal"],
+  krakenAssets: {
+    XBT: "BTC",
+    XXBT: "BTC",
+    XETH: "ETH",
+    XXRP: "XRP",
+    XXLM: "XLM",
+    XLTC: "LTC",
+    LUNA: "LUNC",
+    LUNA2: "LUNA",
+    ZUSD: "USD",
+    ZEUR: "EUR",
+  },
 };
 
 exports.addKey = (req, res) => {
@@ -47,14 +69,12 @@ exports.addKey = (req, res) => {
 
   let db;
   try {
-    db = new dbController();
-    db.insertInto(req.body);
+    insertInto(req.body);
   } catch (e) {
     res.status(400).send(e);
     return;
   }
   res.sendStatus(200);
-  db.close();
 };
 
 exports.getName = async (req, res) => {
@@ -65,10 +85,8 @@ exports.getName = async (req, res) => {
       .send("To get Name, please include valid id in query params");
     return;
   }
-  let db;
   try {
-    db = new dbController();
-    await db.getName(id).then(
+    await getName(id).then(
       (value) => {
         res.status(200).send(value);
         return;
@@ -82,14 +100,11 @@ exports.getName = async (req, res) => {
     res.status(400).send(e);
     return;
   }
-  db.close();
 };
 
 exports.getAllKeys = async (req, res) => {
-  let db;
   try {
-    db = new dbController();
-    await db.allKeys().then(
+    await allKeys().then(
       (value) => {
         res.status(200).send(value);
         return;
@@ -103,7 +118,6 @@ exports.getAllKeys = async (req, res) => {
     res.status(400).send(e);
     return;
   }
-  db.close();
 };
 
 exports.getBalance = async (req, res) => {
@@ -150,3 +164,91 @@ exports.prices = async (req, res) => {
     }
   );
 };
+
+exports.upload = async (req, res) => {
+  let id = 0;
+  try {
+    id = parseInt(req.query.id);
+  } catch (e) {
+    res
+      .status(400)
+      .send("To get Balance, please include valid id in query params");
+    return;
+  }
+  let exchange = "";
+  await getExchange(id).then(
+    (value) => {
+      exchange = value;
+    },
+    (reason) => {
+      res.status(400).send(reason);
+      return;
+    }
+  );
+  console.log("echange", exchange);
+  if (exchange == "Kraken") {
+    await uploadKraken(req, res, id);
+  }
+  if (exchange == "Binance") {
+    await uploadBinance(req, res);
+  }
+};
+
+const uploadKraken = async (req, res, id) => {
+  /*
+  txid,               refid,                time,               type,   subtype, aclass,  asset, amount, fee, balance
+  LCA6LV-5E7UH-47F36I,QCCTI4Q-ZKBGSL-T2XNVB,2020-02-25 02:13:24,deposit,        ,currency,ZEUR,  100,    0,   100
+  */
+  let rawRecords = parse(req.body);
+  const expectedCols = [
+    "txid",
+    "refid",
+    "time",
+    "type",
+    "subtype",
+    "aclass",
+    "asset",
+    "amount",
+    "fee",
+    "balance",
+  ];
+  if (String(rawRecords[0]) != String(expectedCols)) {
+    res
+      .status(400)
+      .send(
+        "CSV File does not have the right format with columns : " +
+          expectedCols.join(", ")
+      );
+    return;
+  }
+  rawRecords = rawRecords.slice(1);
+  const refinedRecords = transform(
+    rawRecords.filter(function (value) {
+      // records with no txid are in double
+      return value[0] != "" && params.krakenDeposits.includes(value[3]);
+    }),
+    function (data) {
+      return {
+        key_id: id,
+        utc_time: new Date(data[2]).getTime(),
+        asset: params.krakenAssets.hasOwnProperty(data[6])
+          ? params.krakenAssets[data[6]]
+          : data[6],
+        change: parseFloat(data[7]),
+      };
+    }
+  );
+
+  console.log(refinedRecords);
+  try {
+    addRecords(refinedRecords);
+  } catch (e) {
+    res.status(500).send("Cannot add records to db : " + e.message());
+    return;
+  }
+
+  res.sendStatus(200);
+  return;
+};
+
+const uploadBinance = async (req, res) => {};

@@ -1,15 +1,13 @@
 const { MainClient } = require("binance");
-const dbController = require("./dbController");
+const { publicAndSecretKey } = require("./dbController");
 
 async function clientFromId(id) {
-  const db = new dbController();
   let public_key, secret_key;
   try {
-    ({ public_key, secret_key } = await db.publicAndSecretKey(id));
+    ({ public_key, secret_key } = await publicAndSecretKey(id));
   } catch (e) {
     throw e;
   }
-  db.close();
   return new MainClient({
     api_key: public_key,
     api_secret: secret_key,
