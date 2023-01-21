@@ -21,6 +21,13 @@
     >
       <div>DEPOSITS</div>
     </div>
+    <div
+      class="sidebar-element"
+      :class="{ selected: router.currentRoute.value.path == paths.upload }"
+      @click="router.push(paths.upload)"
+    >
+      <div>UPLOAD</div>
+    </div>
   </div>
 </template>
 

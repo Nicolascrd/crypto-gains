@@ -112,3 +112,24 @@ export async function getAllKeys(): Promise<IKey[] | null> {
   }
   return response.json();
 }
+
+export async function uploadCSV(id: number, file: File): Promise<string> {
+  const response = await fetch(
+    "http://localhost:3000/upload?id=" + String(id),
+    {
+      method: "POST",
+      mode: "cors",
+      cache: "no-cache",
+      redirect: "follow",
+      headers: {
+        "Content-Type": "text/csv",
+      },
+      referrerPolicy: "no-referrer",
+      body: await file.text(), // body data type must match "Content-Type" header
+    }
+  );
+  if (!response.ok) {
+    throw Error("Cannot upload csv file: " + String(await response.text()));
+  }
+  return response.text();
+}

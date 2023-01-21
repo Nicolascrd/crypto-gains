@@ -131,6 +131,7 @@ input[type="radio"] {
 #kraken:checked:checked ~ .kraken {
   border-color: var(--kraken-blue);
   background: var(--kraken-blue);
+  color: white;
 }
 
 input[type="text"]:focus {
