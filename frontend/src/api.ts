@@ -1,3 +1,6 @@
+import { storeToRefs } from "pinia";
+import { useStore } from "./store";
+
 export type Exchange = "Binance" | "Kraken";
 
 export interface INewKey {
@@ -95,12 +98,25 @@ export async function newKey(data: INewKey): Promise<null> {
   return null;
 }
 
-export async function getAllKeys(): Promise<IKey[] | null> {
+async function getAllKeysWrapped(): Promise<IKey[] | null> {
   const response = await fetch(BackendURL + "all_keys", defaultParamsGet);
   if (!response.ok) {
     throw Error("Cannot get all keys : " + String(await response.text()));
   }
   return response.json();
+}
+
+export async function getAllKeys(): Promise<IKey[] | null> {
+  const res = (await getAllKeysWrapped()) as IKey[] | null;
+  if (!res) {
+    return null;
+  }
+
+  const { updateIdsFromGet } = useStore();
+
+  updateIdsFromGet(res);
+
+  return res;
 }
 
 export async function uploadCSV(id: number, file: File): Promise<string> {

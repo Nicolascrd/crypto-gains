@@ -1,14 +1,19 @@
 <template>
   <div class="sidebar">
-    <div class="sidebar-element" @click="router.push(paths.home)">
+    <div
+      class="sidebar-element"
+      :class="{ selected: router.currentRoute.value.path == paths.home }"
+      @click="router.push(paths.home)"
+    >
       <div>HOME</div>
     </div>
     <div
       class="sidebar-element"
       :class="{
         selected: router.currentRoute.value.path == paths.balance,
+        block: !atLeastOneSelectedId,
       }"
-      @click="router.push(paths.balance)"
+      @click="atLeastOneSelectedId && router.push(paths.balance)"
     >
       <div>BALANCE</div>
     </div>
@@ -16,15 +21,19 @@
       class="sidebar-element"
       :class="{
         selected: router.currentRoute.value.path == paths.deposits,
+        block: !atLeastOneSelectedId,
       }"
-      @click="router.push(paths.deposits)"
+      @click="atLeastOneSelectedId && router.push(paths.deposits)"
     >
       <div>DEPOSITS</div>
     </div>
     <div
       class="sidebar-element"
-      :class="{ selected: router.currentRoute.value.path == paths.upload }"
-      @click="router.push(paths.upload)"
+      :class="{
+        selected: router.currentRoute.value.path == paths.upload,
+        block: !atLeastOneSelectedId,
+      }"
+      @click="atLeastOneSelectedId && router.push(paths.upload)"
     >
       <div>UPLOAD</div>
     </div>
@@ -32,10 +41,13 @@
 </template>
 
 <script setup lang="ts">
+import { useStore } from "./../store";
+import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { paths } from "../router";
 
 const router = useRouter();
+const { atLeastOneSelectedId } = storeToRefs(useStore());
 </script>
 
 <style scoped>
@@ -75,5 +87,13 @@ const router = useRouter();
 .sidebar-element:hover {
   font-weight: 600;
   color: var(--light-green);
+}
+.sidebar-element.block {
+  color: lightgray;
+  cursor: not-allowed;
+}
+.sidebar-element.block:hover {
+  font-weight: inherit;
+  color: lightgray;
 }
 </style>

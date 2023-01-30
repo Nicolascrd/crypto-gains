@@ -16,10 +16,10 @@ import { router, paths } from "./../router";
 import { storeToRefs } from "pinia";
 
 const store = useStore();
-const { id } = storeToRefs(store);
+const { numberOfSelectedIds } = storeToRefs(store);
 
 onMounted(() => {
-  if (id.value == 0) {
+  if (numberOfSelectedIds.value == 0) {
     // no id selected
     router.push(paths.home);
   }

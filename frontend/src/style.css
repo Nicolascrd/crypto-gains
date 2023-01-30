@@ -50,9 +50,6 @@ table th,
 table td {
   padding: 12px 15px;
 }
-tr:hover {
-  background-color: #00987a8e;
-}
 
 .sidebar-container {
   position: absolute;
