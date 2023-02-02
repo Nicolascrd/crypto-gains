@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { json, text } from "body-parser";
+import bodyParser from "body-parser";
+
+const { json, text } = bodyParser;
 import {
   getName,
   getAllKeys,
@@ -7,12 +9,12 @@ import {
   prices,
   addKey,
   upload,
-} from "../controllers/appController";
+} from "../controllers/appController.js";
 
 const router = Router();
 
 const jsonParser = json();
-const csvParser = text({ type: "*/csv" });
+const csvParser = text({ type: "*/csv", limit: "5mb" });
 
 // API Routes GET
 router.get("/name", getName);
@@ -24,4 +26,4 @@ router.post("/add_key", jsonParser, addKey);
 router.post("/prices", jsonParser, prices);
 router.post("/upload", csvParser, upload);
 
-module.exports = router;
+export default router;

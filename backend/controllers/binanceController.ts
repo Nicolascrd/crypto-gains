@@ -1,5 +1,6 @@
 import { MainClient } from "binance";
-import { publicAndSecretKey } from "./dbController";
+import { publicAndSecretKey } from "./dbController.js";
+import { GetAccount } from "./interfaces.js";
 
 async function clientFromId(id: number) {
   let public_key: string, secret_key: string;
@@ -21,7 +22,7 @@ export const getAccount = async (id: number) => {
   } catch (err) {
     throw err;
   }
-  let res = {
+  let res: GetAccount = {
     amounts: {} as Record<string, number>,
     tickers: [] as string[],
   };

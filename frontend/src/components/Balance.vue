@@ -59,7 +59,17 @@ const stablecoinsBalance = ref({} as Record<string, number>);
 const accountName = ref("");
 const displayStablecoins = ref(false);
 const store = useStore();
-const { id } = storeToRefs(store);
+const { selectedIds } = storeToRefs(store);
+
+const id = computed(() => {
+  // TEMPORARY
+  for (let id in selectedIds.value) {
+    if (selectedIds.value[id]) {
+      return parseInt(id);
+    }
+  }
+  return 0;
+});
 
 onMounted(async () => {
   const data = await getBalance(id.value);

@@ -1,5 +1,8 @@
-import { getAccount, getPrices } from "./binanceController";
-
+import {
+  getAccount as binanceGetAccount,
+  getPrices,
+} from "./binanceController.js";
+import { getAccount as krakenGetAccount } from "./krakenController.js";
 import {
   insertInto,
   getNameFromId,
@@ -7,27 +10,13 @@ import {
   allKeys,
   addRecords,
   IDepositRecord,
-} from "./dbController";
+} from "./dbController.js";
 import { parse, transform } from "csv/sync";
 import { Request, Response } from "express";
+import { params } from "../params/exchangeSpecifics.js";
 
 // An import assertion in a dynamic import
-const params = {
-  exchanges: ["Binance", "Kraken"],
-  krakenDeposits: ["deposit", "withdrawal"],
-  krakenAssets: {
-    XBT: "BTC",
-    XXBT: "BTC",
-    XETH: "ETH",
-    XXRP: "XRP",
-    XXLM: "XLM",
-    XLTC: "LTC",
-    LUNA: "LUNC",
-    LUNA2: "LUNA",
-    ZUSD: "USD",
-    ZEUR: "EUR",
-  } as Record<string, string>,
-};
+
 
 export const addKey = (req: Request, res: Response) => {
   if (
@@ -149,14 +138,38 @@ export const getBalance = async (req: Request, res: Response) => {
       .send("To get Balance, please include valid id in query params");
     return;
   }
-  await getAccount(id).then(
+  let exchange = "";
+  await getExchange(id).then(
     (value) => {
-      res.status(200).json(value);
+      exchange = value;
     },
     (reason) => {
       res.status(400).send(reason);
+      return;
     }
   );
+
+  if (exchange == "Kraken") {
+    await krakenGetAccount(id).then(
+      (value) => {
+        res.status(200).json(value);
+      },
+      (reason) => {
+        res.status(400).send(reason);
+      }
+    );
+  }
+
+  if (exchange == "Binance") {
+    await binanceGetAccount(id).then(
+      (value) => {
+        res.status(200).json(value);
+      },
+      (reason) => {
+        res.status(400).send(reason);
+      }
+    );
+  }
 };
 
 export const prices = async (req: Request, res: Response) => {
@@ -204,11 +217,12 @@ export const upload = async (req: Request, res: Response) => {
       return;
     }
   );
+  console.log("upload to ", exchange);
   if (exchange == "Kraken") {
     await uploadKraken(req, res, id);
   }
   if (exchange == "Binance") {
-    await uploadBinance(req, res);
+    await uploadBinance(req, res, id);
   }
 };
 
@@ -239,7 +253,7 @@ const uploadKraken = async (req: Request, res: Response, id: number) => {
       );
     return;
   }
-  rawRecords = rawRecords.slice(1);
+  rawRecords = rawRecords.slice(1); // remove top row
   const refinedRecords = transform(
     rawRecords.filter(function (value) {
       // records with no txid are in double
@@ -270,4 +284,61 @@ const uploadKraken = async (req: Request, res: Response, id: number) => {
   return;
 };
 
-const uploadBinance = async (req: Request, res: Response) => {};
+const uploadBinance = async (req: Request, res: Response, id: number) => {
+  /*
+  User_ID, UTC_time,               Account, Operation, Coin, Change, Remark 
+  51224736, 2020-02-25 02:13:24,  Earn,   Simple Earn Flexible interest, ADA, 0.01, fee included
+  */
+  let rawRecords = [] as string[];
+  try {
+    rawRecords = parse(req.body) as string[];
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Cannot parse request body");
+  }
+  const expectedCols = [
+    "User_ID",
+    "UTC_Time",
+    "Account",
+    "Operation",
+    "Coin",
+    "Change",
+    "Remark",
+  ];
+  if (String(rawRecords[0]) != String(expectedCols)) {
+    res
+      .status(400)
+      .send(
+        "CSV File does not have the right format with columns : " +
+          expectedCols.join(", ")
+      );
+    return;
+  }
+  const refinedRecords = transform(
+    rawRecords
+      .slice(1)
+      .filter((data) => params.binanceDeposits.includes(data[3])),
+    function (data) {
+      return {
+        key_id: id,
+        utc_time: new Date(data[1]).getTime(),
+        asset: params.krakenAssets.hasOwnProperty(data[4])
+          ? params.krakenAssets[data[4]]
+          : data[4],
+        change: parseFloat(data[5]),
+      } as IDepositRecord;
+    }
+  );
+
+  console.log(refinedRecords);
+  try {
+    addRecords(refinedRecords);
+  } catch (e: any) {
+    res.status(500).send("Cannot add records to db");
+    console.error(e);
+    return;
+  }
+
+  res.sendStatus(200);
+  return;
+};

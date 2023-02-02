@@ -1,4 +1,5 @@
-import { Database } from "sqlite3";
+import sqlite3 from "sqlite3";
+const { Database } = sqlite3;
 
 export type Exchange = "Kraken" | "Binance";
 
@@ -37,19 +38,23 @@ export const insertInto = (newKey: INewKey) => {
 export const getNameFromId = (id: number) => {
   let db = newDbConnector();
   return new Promise<string>(function (resolve, reject) {
-    db.all(`SELECT name FROM keys WHERE key_id = ${id}`, [], (err, rows) => {
-      if (err) {
-        return reject(err);
+    db.all(
+      `SELECT name FROM keys WHERE key_id = ${id}`,
+      [],
+      (err: Error, rows: any[]) => {
+        if (err) {
+          return reject(err);
+        }
+        console.log(`retrieved ${rows.length} keys in the local db`);
+        if (rows.length != 1) {
+          return reject("No keys corresponding to ID " + id);
+        }
+        if (rows[0].name == undefined) {
+          return reject("Name can't be undefined");
+        }
+        resolve(rows[0].name);
       }
-      console.log(`retrieved ${rows.length} keys in the local db`);
-      if (rows.length != 1) {
-        return reject("No keys corresponding to ID " + id);
-      }
-      if (rows[0].name == undefined) {
-        return reject("Name can't be undefined");
-      }
-      resolve(rows[0].name);
-    });
+    );
     db.close();
   });
 };
@@ -153,16 +158,15 @@ export const addRecords = (recordsArr: IDepositRecord[]) => {
 };
 
 const newDbConnector = () => {
-  let db: Database;
   try {
-    db = new Database("./db/cryptoGains.db", (err: Error | null) => {
+    let db = new Database("./db/cryptoGains.db", (err: Error | null) => {
       if (err) {
         throw err;
       }
       console.log("Connected to the SQLite DB");
     });
+    return db;
   } catch (e) {
     throw e;
   }
-  return db;
 };
