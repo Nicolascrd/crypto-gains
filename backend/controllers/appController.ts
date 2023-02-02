@@ -13,25 +13,10 @@ import {
 } from "./dbController.js";
 import { parse, transform } from "csv/sync";
 import { Request, Response } from "express";
+import { params } from "../params/exchangeSpecifics.js";
 
 // An import assertion in a dynamic import
-const params = {
-  exchanges: ["Binance", "Kraken"],
-  binanceDeposits: ["Deposit", "Withdraw"],
-  krakenDeposits: ["deposit", "withdrawal"],
-  krakenAssets: {
-    XBT: "BTC",
-    XXBT: "BTC",
-    XETH: "ETH",
-    XXRP: "XRP",
-    XXLM: "XLM",
-    XLTC: "LTC",
-    LUNA: "LUNC",
-    LUNA2: "LUNA",
-    ZUSD: "USD",
-    ZEUR: "EUR",
-  } as Record<string, string>,
-};
+
 
 export const addKey = (req: Request, res: Response) => {
   if (
