@@ -16,10 +16,15 @@ export interface IDepositRecord {
   asset: string;
   change: number;
 }
-
+export interface IReadKey {
+  key_id: number;
+  exchange: string;
+  name: string;
+  public_key: string;
+}
 export const insertInto = (newKey: INewKey) => {
   // object with fields: exchange, name, public_key, private_key
-  let db = newDbConnector();
+  const db = newDbConnector();
   db.run(
     `INSERT INTO keys(exchange, name, public_key, secret_key) VALUES("${newKey.exchange}", "${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
     [],
@@ -36,12 +41,13 @@ export const insertInto = (newKey: INewKey) => {
 };
 
 export const getNameFromId = (id: number) => {
-  let db = newDbConnector();
+  const db = newDbConnector();
   return new Promise<string>(function (resolve, reject) {
     db.all(
       `SELECT name FROM keys WHERE key_id = ${id}`,
       [],
-      (err: Error, rows: any[]) => {
+      (err: Error, rows: { name: string }[]) => {
+        console.log("any all keys", rows);
         if (err) {
           return reject(err);
         }
@@ -60,12 +66,13 @@ export const getNameFromId = (id: number) => {
 };
 
 export const getExchange = (id: number) => {
-  let db = newDbConnector();
+  const db = newDbConnector();
   return new Promise<Exchange>(function (resolve, reject) {
     db.all(
       `SELECT exchange FROM keys WHERE key_id = ${id}`,
       [],
-      (err: Error, rows: any[]) => {
+      (err: Error, rows: { exchange: Exchange }[]) => {
+        console.log("any all keys", rows);
         if (err) {
           console.error(err);
           return reject(err);
@@ -82,12 +89,13 @@ export const getExchange = (id: number) => {
 };
 
 export const allKeys = () => {
-  let db = newDbConnector();
-  return new Promise<any[]>(function (resolve, reject) {
+  const db = newDbConnector();
+  return new Promise<IReadKey[]>(function (resolve, reject) {
     db.all(
       "SELECT key_id, exchange, name, public_key FROM keys",
       [],
-      (err: Error, rows: any[]) => {
+      (err: Error, rows: IReadKey[]) => {
+        console.log("any all keys", rows);
         if (err) {
           return reject(err);
         }
@@ -105,7 +113,7 @@ export interface IPublicAndSecretKey {
 }
 
 export const publicAndSecretKey = (id: number) => {
-  let db = newDbConnector();
+  const db = newDbConnector();
 
   return new Promise<IPublicAndSecretKey>(function (resolve, reject) {
     db.all(
@@ -119,8 +127,8 @@ export const publicAndSecretKey = (id: number) => {
         if (rows.length != 1) {
           return reject("No keys corresponding to ID " + id);
         }
-        let public_key = rows[0].public_key;
-        let secret_key = rows[0].secret_key;
+        const public_key = rows[0].public_key;
+        const secret_key = rows[0].secret_key;
         if (public_key == undefined) {
           return reject("Public key can't be undefined");
         }
@@ -135,11 +143,11 @@ export const publicAndSecretKey = (id: number) => {
 };
 
 export const addRecords = (recordsArr: IDepositRecord[]) => {
-  let db = newDbConnector();
+  const db = newDbConnector();
 
   let str =
     "INSERT INTO depositsWithdrawals(account, utc_time, asset, change) VALUES";
-  for (let rec of recordsArr) {
+  for (const rec of recordsArr) {
     str += `(${rec.key_id}, ${rec.utc_time}, "${rec.asset}", ${rec.change}),`;
   }
   str = str.slice(0, str.length - 1) + ";";
@@ -158,15 +166,11 @@ export const addRecords = (recordsArr: IDepositRecord[]) => {
 };
 
 const newDbConnector = () => {
-  try {
-    let db = new Database("./db/cryptoGains.db", (err: Error | null) => {
-      if (err) {
-        throw err;
-      }
-      console.log("Connected to the SQLite DB");
-    });
-    return db;
-  } catch (e) {
-    throw e;
-  }
+  const db = new Database("./db/cryptoGains.db", (err: Error | null) => {
+    if (err) {
+      throw err;
+    }
+    console.log("Connected to the SQLite DB");
+  });
+  return db;
 };

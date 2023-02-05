@@ -17,7 +17,6 @@ import { params } from "../params/exchangeSpecifics.js";
 
 // An import assertion in a dynamic import
 
-
 export const addKey = (req: Request, res: Response) => {
   if (
     req.body.exchange == undefined ||
@@ -263,9 +262,10 @@ const uploadKraken = async (req: Request, res: Response, id: number) => {
       return {
         key_id: id,
         utc_time: new Date(data[2]).getTime(),
-        asset: params.krakenAssets.hasOwnProperty(data[6])
-          ? params.krakenAssets[data[6]]
-          : data[6],
+        asset:
+          data[6] in params.krakenAssets
+            ? params.krakenAssets[data[6]]
+            : data[6],
         change: parseFloat(data[7]),
       } as IDepositRecord;
     }
@@ -274,7 +274,7 @@ const uploadKraken = async (req: Request, res: Response, id: number) => {
   console.log(refinedRecords);
   try {
     addRecords(refinedRecords);
-  } catch (e: any) {
+  } catch (e) {
     res.status(500).send("Cannot add records to db");
     console.error(e);
     return;
@@ -322,9 +322,10 @@ const uploadBinance = async (req: Request, res: Response, id: number) => {
       return {
         key_id: id,
         utc_time: new Date(data[1]).getTime(),
-        asset: params.krakenAssets.hasOwnProperty(data[4])
-          ? params.krakenAssets[data[4]]
-          : data[4],
+        asset:
+          data[4] in params.krakenAssets
+            ? params.krakenAssets[data[4]]
+            : data[4],
         change: parseFloat(data[5]),
       } as IDepositRecord;
     }
@@ -333,7 +334,7 @@ const uploadBinance = async (req: Request, res: Response, id: number) => {
   console.log(refinedRecords);
   try {
     addRecords(refinedRecords);
-  } catch (e: any) {
+  } catch (e) {
     res.status(500).send("Cannot add records to db");
     console.error(e);
     return;
