@@ -2,7 +2,10 @@ import {
   getAccount as binanceGetAccount,
   getPrices,
 } from "./binanceController.js";
-import { getAccount as krakenGetAccount } from "./krakenController.js";
+import {
+  getAccount as krakenGetAccount,
+  getPrices as getKrakenPrices,
+} from "./krakenController.js";
 import {
   insertInto,
   getNameFromId,
@@ -177,17 +180,39 @@ export const prices = async (req: Request, res: Response) => {
     req.body == undefined ||
     req.body.length < 1
   ) {
-    res.status(400).send("body must be an array of tickers");
+    res
+      .status(400)
+      .send("body must be an array of tickers, but is : " + req.body);
     return;
   }
-  await getPrices(req.body).then(
-    (value) => {
-      res.status(200).json(value);
-    },
-    (reason) => {
-      res.status(400).send(reason);
+  // get all prices available on Binance, then the rest on Kraken
+  const binanceArrayOfTickers = [];
+  const krakenArrayOfTickers = [];
+
+  for (const t of req.body) {
+    if (params.binanceUSDTPairs.includes(t)) {
+      binanceArrayOfTickers.push(t);
+    } else if (params.krakenUSDPairs.includes(t)) {
+      krakenArrayOfTickers.push(t);
     }
-  );
+  }
+
+  const promises = [
+    getPrices(binanceArrayOfTickers),
+    getKrakenPrices(krakenArrayOfTickers),
+  ];
+  await Promise.all(promises)
+    .then(
+      (values) => {
+        res.status(200).json({ ...values[1], ...values[0] });
+      },
+      (reason) => {
+        res.status(400).send(reason);
+      }
+    )
+    .catch((reason) => {
+      res.status(400).send(reason);
+    });
 };
 
 export const upload = async (req: Request, res: Response) => {

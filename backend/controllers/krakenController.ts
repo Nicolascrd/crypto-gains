@@ -1,4 +1,4 @@
-import KrakenClient from "kraken-api";
+import KrakenClient from "ts-kraken-api";
 import { params } from "../params/exchangeSpecifics.js";
 import { publicAndSecretKey } from "./dbController.js";
 import { GetAccount } from "./interfaces.js";
@@ -35,5 +35,33 @@ export const getAccount = async (id: number) => {
         throw Error("Cannot query balance");
       }
       return krakenConverter(result.result);
+    });
+};
+
+export const getPrices = (tickers: string[]) => {
+  const client = new KrakenClient("", "");
+  const promises = [];
+  for (const t of tickers) {
+    promises.push(
+      client.publicMethod("Ticker", { pair: t + "USD" }, () => undefined)
+    );
+  }
+  return Promise.all(promises)
+    .then(
+      (values) => {
+        const pricesMap = {} as Record<string, number>;
+        values.forEach((value, index) => {
+          for (const tick in value.result) {
+            pricesMap[tickers[index]] = parseFloat(value.result[tick]["b"][0]);
+          }
+        });
+        return pricesMap;
+      },
+      (reason) => {
+        throw reason;
+      }
+    )
+    .catch((reason) => {
+      throw reason;
     });
 };

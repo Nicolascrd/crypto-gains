@@ -15,6 +15,7 @@ export const params = {
     ZUSD: "USD",
     ZEUR: "EUR",
     "XTZ.S": "XTZ",
+    "DOT.S": "DOT",
   } as Record<string, string>,
   krakenFIAT: ["EUR", "USD"],
   krakenUSDPairs: [
@@ -221,6 +222,10 @@ export const params = {
     "YFI",
     "YGG",
     "ZRX",
+    // FIAT BEHAVE LIKE CRYPTO ON KRAKEN API, However some fiat currencies are unavailable
+    "EUR",
+    "GBP",
+    "AUD",
   ],
   binanceUSDTPairs: [
     "BTC",
@@ -516,7 +521,6 @@ export const params = {
     "XNO",
     "WOO",
     "ALPINE",
-    "T",
     "ASTR",
     "GMT",
     "KDA",
