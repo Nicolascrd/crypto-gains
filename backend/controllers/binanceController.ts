@@ -46,7 +46,7 @@ export const getAccount = async (id: number) => {
   });
 };
 
-export const getPrices = async (tickers: string[]) => {
+export const getPrices = (tickers: string[]) => {
   const client = new MainClient({});
   const promises = [];
 
@@ -57,7 +57,6 @@ export const getPrices = async (tickers: string[]) => {
     .then(
       (values) => {
         const pricesMap = {} as Record<string, number>;
-        console.log(values, tickers);
         values.forEach((value, index) => {
           pricesMap[tickers[index]] =
             typeof value.price == "number"
