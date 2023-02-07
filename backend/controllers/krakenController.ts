@@ -8,7 +8,7 @@ const clientFromId = async (id: number) => {
   return new KrakenClient(public_key, secret_key);
 };
 
-const krakenConverter = function (balance: Record<string, number>): GetAccount {
+const krakenConverter = function (balance: Record<string, string>): GetAccount {
   const res = {
     amounts: {},
     tickers: [],
@@ -16,10 +16,10 @@ const krakenConverter = function (balance: Record<string, number>): GetAccount {
   for (const asset in balance) {
     if (asset in params.krakenAssets) {
       res.tickers.push(params.krakenAssets[asset]);
-      res.amounts[params.krakenAssets[asset]] = balance[asset];
+      res.amounts[params.krakenAssets[asset]] = Number(balance[asset]);
     } else {
       res.tickers.push(asset);
-      res.amounts[asset] = balance[asset];
+      res.amounts[asset] = Number(balance[asset]);
     }
   }
   return res;

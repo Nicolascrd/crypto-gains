@@ -20,4 +20,10 @@ export const colors = {
   DOT: "#E6007A",
   SHIB: "#EE4832",
   LTC: "#345D9D",
+  USDC: "#2775CA",
+  XLM: "#010101",
+  BCH: "#8DC351",
+
+  EUR: "#004494",
+  USD: "#88c6a3",
 } as Record<string, string>;

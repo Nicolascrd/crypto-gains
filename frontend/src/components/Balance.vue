@@ -1,14 +1,18 @@
 <template>
   <h1>Current Balance : {{ accountName }}</h1>
   <div>
-    Display Stablecoins:
-    <label class="switch">
+    <label>
+      Display Stablecoins:
       <input type="checkbox" v-model="displayStablecoins" />
-      <span class="slider round"></span>
+    </label>
+    <label>
+      Display Fiat:
+      <input type="checkbox" v-model="displayFiat" />
     </label>
   </div>
   <div class="balance-container">
     <div>
+      {{ balance.value }}
       <table>
         <thead>
           <th>Asset</th>
@@ -17,7 +21,9 @@
         </thead>
         <tr v-for="(bal, asset) in balance">
           <td>{{ asset }}</td>
-          <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
+          <td>
+            {{ bal > 1 ? decimalRound(bal, 2) : /*bal.toPrecision(3)*/ bal }}
+          </td>
           <td>{{ decimalRound(prices[asset] * bal, 2) }}</td>
         </tr>
         <tr
@@ -50,14 +56,17 @@ import { options, colors } from "./chartConfig";
 import { decimalRound } from "./../utils";
 import { useStore } from "../store";
 import { storeToRefs } from "pinia";
+import { STABLECOINS, FIAT } from "./../coins";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const balance = ref({} as Record<string, number>);
-const prices = ref({} as Record<string, number>);
+const prices = ref({ USD: 1 } as Record<string, number>);
 const stablecoinsBalance = ref({} as Record<string, number>);
+const fiatBalance = ref({} as Record<string, number>);
 const accountName = ref("");
 const displayStablecoins = ref(false);
+const displayFiat = ref(true);
 const store = useStore();
 const { selectedIds } = storeToRefs(store);
 
@@ -74,9 +83,14 @@ const id = computed(() => {
 onMounted(async () => {
   const data = await getBalance(id.value);
   const stablecoins = {} as Record<string, number>;
+  const fiat = {} as Record<string, number>;
+
   for (let am in data.amounts) {
-    if (am.includes("USD")) {
+    if (STABLECOINS.has(am)) {
       stablecoins[am] = data.amounts[am];
+      delete data.amounts[am];
+    } else if (FIAT.has(am)) {
+      fiat[am] = data.amounts[am];
       delete data.amounts[am];
     }
   }
@@ -96,6 +110,16 @@ onMounted(async () => {
   if (stablecoins) {
     stablecoinsBalance.value = stablecoins;
   }
+  if (fiat) {
+    fiatBalance.value = fiat;
+  }
+  console.log(
+    balance.value,
+    accountName.value,
+    prices.value,
+    stablecoinsBalance.value,
+    fiatBalance.value
+  );
 });
 
 const labels = computed(() => {
@@ -106,6 +130,11 @@ const labels = computed(() => {
   if (displayStablecoins.value) {
     for (let stable in stablecoinsBalance.value) {
       res.push(stable);
+    }
+  }
+  if (displayFiat.value) {
+    for (let fiat in fiatBalance.value) {
+      res.push(fiat);
     }
   }
   return res;
@@ -124,6 +153,12 @@ const data = computed(() => {
     for (let stable in stablecoinsBalance.value) {
       res.values.push(stablecoinsBalance.value[stable]);
       res.colors.push(colors[stable]);
+    }
+  }
+  if (displayFiat.value) {
+    for (let fiat in fiatBalance.value) {
+      res.values.push(fiatBalance.value[fiat]);
+      res.colors.push(colors[fiat]);
     }
   }
   return res;
@@ -147,6 +182,11 @@ const totalDollarValue = computed(() => {
   if (displayStablecoins.value) {
     for (let stable in stablecoinsBalance.value) {
       res += stablecoinsBalance.value[stable];
+    }
+  }
+  if (displayFiat.value) {
+    for (let fiat in fiatBalance.value) {
+      res += fiatBalance.value[fiat] * prices.value[fiat];
     }
   }
   return res;
