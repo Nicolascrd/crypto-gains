@@ -1,4 +1,3 @@
-import { storeToRefs } from "pinia";
 import { useStore } from "./store";
 
 export type Exchange = "Binance" | "Kraken";
@@ -43,7 +42,7 @@ const defaultParamsPost: RequestInit = {
 
 const BackendURL = "http://localhost:3000/";
 
-export async function getBalance(id: Number): Promise<IAccountBalance> {
+export async function getBalance(id: number): Promise<IAccountBalance> {
   /*
   {
     prices: {
@@ -68,7 +67,7 @@ export async function getBalance(id: Number): Promise<IAccountBalance> {
 export async function getPrices(
   arr: Array<string>
 ): Promise<Record<string, number>> {
-  let params = defaultParamsPost;
+  const params = defaultParamsPost;
   params.body = JSON.stringify(arr.filter((val) => !val.includes("USD")));
   const response = await fetch(BackendURL + "prices", params);
   if (!response.ok) {
@@ -77,7 +76,7 @@ export async function getPrices(
   return response.json();
 }
 
-export async function getName(id: Number): Promise<string> {
+export async function getName(id: number): Promise<string> {
   const response = await fetch(
     BackendURL + "name?id=" + String(id),
     defaultParamsGet
@@ -89,7 +88,7 @@ export async function getName(id: Number): Promise<string> {
 }
 
 export async function newKey(data: INewKey): Promise<null> {
-  let params = defaultParamsPost;
+  const params = defaultParamsPost;
   params.body = JSON.stringify(data);
   const response = await fetch(BackendURL + "add_key", params);
   if (!response.ok) {
@@ -120,7 +119,7 @@ export async function getAllKeys(): Promise<IKey[] | null> {
 }
 
 export async function uploadCSV(id: number, file: File): Promise<string> {
-  let params = defaultParamsPost;
+  const params = defaultParamsPost;
   params.headers = {
     "Content-Type": "text/csv",
   };

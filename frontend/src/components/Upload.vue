@@ -14,8 +14,6 @@ import { storeToRefs } from "pinia";
 const result = ref("");
 const file = ref<HTMLInputElement | null>(null);
 
-const { id } = storeToRefs(useStore());
-
 function upload() {
   console.log(file.value?.files?.item(0));
   if (file.value == null || file.value.files == null) {
@@ -27,6 +25,6 @@ function upload() {
     result.value = "Please select a csv file";
     return;
   }
-  uploadCSV(id.value, f);
+  // TO DO uploadCSV(id.value, f);
 }
 </script>
