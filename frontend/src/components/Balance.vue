@@ -22,7 +22,7 @@
         <tr v-for="(bal, asset) in balance">
           <td>{{ asset }}</td>
           <td>
-            {{ bal > 1 ? decimalRound(bal, 2) : /*bal.toPrecision(3)*/ bal }}
+            {{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}
           </td>
           <td>{{ decimalRound(prices[asset] * bal, 2) }}</td>
         </tr>
@@ -30,6 +30,11 @@
           v-for="(bal, asset) in stablecoinsBalance"
           v-if="displayStablecoins"
         >
+          <td>{{ asset }}</td>
+          <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
+          <td>{{ decimalRound(bal, 2) }}</td>
+        </tr>
+        <tr v-for="(bal, asset) in fiatBalance" v-if="displayFiat">
           <td>{{ asset }}</td>
           <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
           <td>{{ decimalRound(bal, 2) }}</td>
@@ -175,7 +180,6 @@ const datasets = computed(() => {
 
 const totalDollarValue = computed(() => {
   let res = 0;
-  console.log("prices, balance", prices.value, balance.value);
   for (let bal in balance.value) {
     res += balance.value[bal] * prices.value[bal];
   }

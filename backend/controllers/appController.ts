@@ -209,7 +209,7 @@ export const prices = async (req: Request, res: Response) => {
   await Promise.all(promises)
     .then(
       (values) => {
-        res.status(200).json({ ...values[1], ...values[0] });
+        res.status(200).json({ ...values[1], ...values[0], USD: 1 });
       },
       (reason) => {
         res.status(400).send(reason);
