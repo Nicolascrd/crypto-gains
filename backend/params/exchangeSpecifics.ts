@@ -321,6 +321,8 @@ export const params = {
     "CHR",
     "ARDR",
     "MDT",
+    "USTC",
+    "LUNC",
     "STMX",
     "KNC",
     "REP",
@@ -549,4 +551,5 @@ export const params = {
     "HOOK",
     "MAGIC",
   ],
+  binanceBUSDpairs: ["USTC"],
 };
