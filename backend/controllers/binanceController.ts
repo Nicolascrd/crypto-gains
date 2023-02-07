@@ -46,19 +46,26 @@ export const getAccount = async (id: number) => {
   });
 };
 
-export const getPrices = (tickers: string[]) => {
+export const getPrices = (tickers: {
+  USDTtickers: string[];
+  BUSDtickers: string[];
+}) => {
   const client = new MainClient({});
   const promises = [];
 
-  for (const t of tickers) {
+  for (const t of tickers.USDTtickers) {
     promises.push(client.getAvgPrice({ symbol: t + "USDT" }));
   }
+  for (const t of tickers.BUSDtickers) {
+    promises.push(client.getAvgPrice({ symbol: t + "BUSD" }));
+  }
+  const allTickers = [...tickers.USDTtickers, ...tickers.BUSDtickers];
   return Promise.all(promises)
     .then(
       (values) => {
         const pricesMap = {} as Record<string, number>;
         values.forEach((value, index) => {
-          pricesMap[tickers[index]] =
+          pricesMap[allTickers[index]] =
             typeof value.price == "number"
               ? value.price
               : parseFloat(value.price);

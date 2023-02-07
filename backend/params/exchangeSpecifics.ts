@@ -321,7 +321,6 @@ export const params = {
     "CHR",
     "ARDR",
     "MDT",
-    "USTC",
     "LUNC",
     "STMX",
     "KNC",

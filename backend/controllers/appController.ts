@@ -186,19 +186,24 @@ export const prices = async (req: Request, res: Response) => {
     return;
   }
   // get all prices available on Binance, then the rest on Kraken
-  const binanceArrayOfTickers = [];
+  const binanceUSDTArrayOfTickers = [];
+  const binanceBUSDArrayOfTickers = [];
   const krakenArrayOfTickers = [];
 
   for (const t of req.body) {
     if (params.binanceUSDTPairs.includes(t)) {
-      binanceArrayOfTickers.push(t);
+      binanceUSDTArrayOfTickers.push(t);
+    } else if (params.binanceBUSDpairs.includes(t)) {
+      binanceBUSDArrayOfTickers.push(t);
     } else if (params.krakenUSDPairs.includes(t)) {
       krakenArrayOfTickers.push(t);
     }
   }
-
   const promises = [
-    getPrices(binanceArrayOfTickers),
+    getPrices({
+      BUSDtickers: binanceBUSDArrayOfTickers,
+      USDTtickers: binanceUSDTArrayOfTickers,
+    }),
     getKrakenPrices(krakenArrayOfTickers),
   ];
   await Promise.all(promises)
