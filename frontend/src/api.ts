@@ -65,8 +65,11 @@ export async function getBalance(id: number): Promise<IAccountBalance> {
 }
 
 export async function getPrices(
-  arr: Array<string>
+  arr: Array<string> | undefined
 ): Promise<Record<string, number>> {
+  if (arr === undefined) {
+    throw Error("Array of tickers is undefined");
+  }
   const params = defaultParamsPost;
   params.body = JSON.stringify(arr.filter((val) => !val.includes("USD")));
   const response = await fetch(BackendURL + "prices", params);

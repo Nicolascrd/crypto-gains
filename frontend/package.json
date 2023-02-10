@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^4.24.4",
     "chart.js": "^4.1.2",
     "pinia": "^2.0.29",
     "vue": "^3.2.45",

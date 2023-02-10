@@ -1,5 +1,7 @@
 <template>
-  <h1>Current Balance : {{ accountName }}</h1>
+  <h1 v-if="isLoadingName">Current Balance : Name Loading..."</h1>
+  <h1 v-else-if="isErrorName">Current Balance : cannot get Name</h1>
+  <h1 v-else-if="isSuccessName">Current Balance : {{ name }}</h1>
   <div>
     <label>
       Display Stablecoins:
@@ -10,31 +12,37 @@
       <input type="checkbox" v-model="displayFiat" />
     </label>
   </div>
-  <div class="balance-container">
+  <div v-if="oneFailure">Error</div>
+  <div v-else-if="oneLoading">Loading...</div>
+  <div v-else class="balance-container" v-if="totalSuccess && pricesData">
     <div>
-      {{ balance.value }}
       <table>
         <thead>
           <th>Asset</th>
           <th>Amount</th>
           <th>Value ($)</th>
         </thead>
-        <tr v-for="(bal, asset) in balance">
+        <tr v-for="(bal, asset) in allBalances.crypto" :key="asset">
           <td>{{ asset }}</td>
           <td>
             {{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}
           </td>
-          <td>{{ decimalRound(prices[asset] * bal, 2) }}</td>
+          <td>{{ decimalRound(pricesData[asset] * bal, 2) }}</td>
         </tr>
         <tr
-          v-for="(bal, asset) in stablecoinsBalance"
+          v-for="(bal, asset) in allBalances.stablecoins"
           v-if="displayStablecoins"
+          :key="asset"
         >
           <td>{{ asset }}</td>
           <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
           <td>{{ decimalRound(bal, 2) }}</td>
         </tr>
-        <tr v-for="(bal, asset) in fiatBalance" v-if="displayFiat">
+        <tr
+          v-for="(bal, asset) in allBalances.fiat"
+          v-if="displayFiat"
+          :key="asset"
+        >
           <td>{{ asset }}</td>
           <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
           <td>{{ decimalRound(bal, 2) }}</td>
@@ -53,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { ref, computed } from "vue";
 import { getBalance, getName, getPrices } from "./../api";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "vue-chartjs";
@@ -62,14 +70,10 @@ import { decimalRound } from "./../utils";
 import { useStore } from "../store";
 import { storeToRefs } from "pinia";
 import { STABLECOINS, FIAT } from "./../coins";
+import { useQuery } from "@tanstack/vue-query";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const balance = ref({} as Record<string, number>);
-const prices = ref({ USD: 1 } as Record<string, number>);
-const stablecoinsBalance = ref({} as Record<string, number>);
-const fiatBalance = ref({} as Record<string, number>);
-const accountName = ref("");
 const displayStablecoins = ref(false);
 const displayFiat = ref(true);
 const store = useStore();
@@ -85,85 +89,111 @@ const id = computed(() => {
   return 0;
 });
 
-onMounted(async () => {
-  const data = await getBalance(id.value);
-  const stablecoins = {} as Record<string, number>;
-  const fiat = {} as Record<string, number>;
+const {
+  isLoading: isLoadingBalance,
+  isError: isErrorBalance,
+  data: balanceData,
+  error: errorBalance,
+  isSuccess: isSuccessBalance,
+} = useQuery(["balance", id.value], () => getBalance(id.value));
 
-  for (let am in data.amounts) {
-    if (STABLECOINS.has(am)) {
-      stablecoins[am] = data.amounts[am];
-      delete data.amounts[am];
-    } else if (FIAT.has(am)) {
-      fiat[am] = data.amounts[am];
-      delete data.amounts[am];
+const balanceAvailable = computed(
+  () => !isLoadingBalance.value && !isErrorBalance.value
+);
+
+const {
+  isLoading: isLoadingPrices,
+  data: pricesData,
+  isSuccess: isSuccessPrices,
+  isError: isErrorPrices,
+} = useQuery(["prices"], () => getPrices(balanceData.value?.tickers), {
+  enabled: balanceAvailable,
+});
+
+const {
+  isLoading: isLoadingName,
+  data: name,
+  isSuccess: isSuccessName,
+  isError: isErrorName,
+} = useQuery(["name", id.value], () => getName(id.value), {
+  enabled: balanceAvailable,
+});
+
+const oneFailure = computed(
+  () => isErrorBalance.value || isErrorName.value || isErrorPrices.value
+);
+
+const oneLoading = computed(
+  () => isLoadingBalance.value || isLoadingName.value || isLoadingPrices.value
+);
+
+const totalSuccess = computed(
+  () => isSuccessBalance.value && isSuccessPrices.value && isSuccessName.value
+);
+
+const allBalances = computed(() => {
+  const res = {
+    stablecoins: {} as Record<string, number>,
+    fiat: {} as Record<string, number>,
+    crypto: {} as Record<string, number>,
+  };
+  if (balanceData.value === undefined) {
+    return res;
+  }
+  for (let am in balanceData.value.amounts) {
+    if (FIAT.has(am)) {
+      res.fiat[am] = balanceData.value.amounts[am];
+    } else if (STABLECOINS.has(am)) {
+      res.stablecoins[am] = balanceData.value.amounts[am];
+    } else {
+      res.crypto[am] = balanceData.value.amounts[am];
     }
   }
-
-  const allPrices = await getPrices(data.tickers);
-  const name = await getName(id.value);
-
-  if (data) {
-    balance.value = data.amounts;
-  }
-  if (name) {
-    accountName.value = name;
-  }
-  if (allPrices) {
-    prices.value = allPrices;
-  }
-  if (stablecoins) {
-    stablecoinsBalance.value = stablecoins;
-  }
-  if (fiat) {
-    fiatBalance.value = fiat;
-  }
-  console.log(
-    balance.value,
-    accountName.value,
-    prices.value,
-    stablecoinsBalance.value,
-    fiatBalance.value
-  );
+  return res;
 });
 
 const labels = computed(() => {
   const res = [] as string[];
-  for (let asset in balance.value) {
+  for (let asset in allBalances.value.crypto) {
     res.push(asset);
   }
   if (displayStablecoins.value) {
-    for (let stable in stablecoinsBalance.value) {
+    for (let stable in allBalances.value.stablecoins) {
       res.push(stable);
     }
   }
   if (displayFiat.value) {
-    for (let fiat in fiatBalance.value) {
+    for (let fiat in allBalances.value.fiat) {
       res.push(fiat);
     }
   }
   return res;
 });
 
-const data = computed(() => {
+const graphData = computed(() => {
   const res = {
     values: [] as number[],
     colors: [] as string[],
   };
-  for (let asset in balance.value) {
-    res.values.push(balance.value[asset] * prices.value[asset]);
+  if (pricesData.value === undefined) {
+    return res;
+  }
+  for (let asset in allBalances.value.crypto) {
+    res.values.push(allBalances.value.crypto[asset] * pricesData.value[asset]);
     res.colors.push(colors[asset]);
   }
   if (displayStablecoins.value) {
-    for (let stable in stablecoinsBalance.value) {
-      res.values.push(stablecoinsBalance.value[stable]);
-      res.colors.push(colors[stable]);
+    for (let asset in allBalances.value.stablecoins) {
+      res.values.push(
+        allBalances.value.stablecoins[asset] * pricesData.value[asset]
+      );
+      res.colors.push(colors[asset]);
     }
   }
   if (displayFiat.value) {
-    for (let fiat in fiatBalance.value) {
-      res.values.push(fiatBalance.value[fiat]);
-      res.colors.push(colors[fiat]);
+    for (let asset in allBalances.value.fiat) {
+      res.values.push(allBalances.value.fiat[asset] * pricesData.value[asset]);
+      res.colors.push(colors[asset]);
     }
   }
   return res;
@@ -172,25 +202,28 @@ const data = computed(() => {
 const datasets = computed(() => {
   return [
     {
-      backgroundColor: data.value.colors,
-      data: data.value.values,
+      backgroundColor: graphData.value.colors,
+      data: graphData.value.values,
     },
   ];
 });
 
 const totalDollarValue = computed(() => {
+  if (pricesData.value === undefined) {
+    return 0;
+  }
   let res = 0;
-  for (let bal in balance.value) {
-    res += balance.value[bal] * prices.value[bal];
+  for (let bal in allBalances.value.crypto) {
+    res += allBalances.value.crypto[bal] * pricesData.value[bal];
   }
   if (displayStablecoins.value) {
-    for (let stable in stablecoinsBalance.value) {
-      res += stablecoinsBalance.value[stable];
+    for (let stable in allBalances.value.stablecoins) {
+      res += allBalances.value.stablecoins[stable];
     }
   }
   if (displayFiat.value) {
-    for (let fiat in fiatBalance.value) {
-      res += fiatBalance.value[fiat] * prices.value[fiat];
+    for (let fiat in allBalances.value.fiat) {
+      res += allBalances.value.fiat[fiat] * pricesData.value[fiat];
     }
   }
   return res;

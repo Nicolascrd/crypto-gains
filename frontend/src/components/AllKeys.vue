@@ -1,5 +1,7 @@
 <template>
-  <div v-if="allKeys.length">
+  <div v-if="isError">Error : make sure the backend is launched</div>
+  <div v-else-if="isLoading">Loading...</div>
+  <div v-else-if="allKeys?.length">
     Please Select the key(s) corresponding to your desired account.<br />
     You have to select at least one key to access the rest of the app
     <table>
@@ -29,25 +31,20 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { onMounted, ref } from "vue";
+import { useQuery } from "@tanstack/vue-query";
 import { useStore } from "../store";
-import { IKey, getAllKeys } from "./../api";
+import { getAllKeys } from "./../api";
 import NewKey from "./NewKey.vue";
 
-const allKeys = ref([] as IKey[]);
 const store = useStore();
 const { toggle } = store;
 const { selectedIds } = storeToRefs(store);
 
-onMounted(async () => {
-  const data = await getAllKeys();
-
-  console.log("data: ", data);
-
-  if (data) {
-    allKeys.value = data;
-  }
-});
+const {
+  data: allKeys,
+  isLoading,
+  isError,
+} = useQuery(["allKeys"], () => getAllKeys());
 </script>
 
 <style scoped>
