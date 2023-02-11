@@ -18,12 +18,10 @@ import { storeToRefs } from "pinia";
 const store = useStore();
 const { numberOfSelectedIds } = storeToRefs(store);
 
-onMounted(() => {
-  if (numberOfSelectedIds.value == 0) {
-    // no id selected
-    router.push(paths.home);
-  }
-});
+if (numberOfSelectedIds.value == 0) {
+  // no id selected
+  router.push(paths.home);
+}
 </script>
 
 <style></style>

@@ -25,16 +25,22 @@
   </div>
   <div v-else>
     Please Add a Key in order to use the app.
-    <NewKey />
+    <NewKey @new-key-refresh="() => invalidateKeysQuery()" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useStore } from "../store";
 import { getAllKeys } from "./../api";
 import NewKey from "./NewKey.vue";
+
+const queryClient = useQueryClient();
+
+const invalidateKeysQuery = () => {
+  queryClient.invalidateQueries({ queryKey: ["allKeys"] });
+};
 
 const store = useStore();
 const { toggle } = store;

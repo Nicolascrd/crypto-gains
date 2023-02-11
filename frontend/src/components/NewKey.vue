@@ -1,45 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import { newKey, INewKey, Exchange } from "../api";
-
-const name = ref<HTMLInputElement | null>(null);
-const api_key = ref<HTMLInputElement | null>(null);
-const secret_key = ref<HTMLInputElement | null>(null);
-const binance = ref<HTMLInputElement | null>(null);
-const kraken = ref<HTMLInputElement | null>(null);
-const errorMessage = ref<String>("");
-
-function clickHandler() {
-  if (name.value == undefined) {
-    return;
-  }
-  if (api_key.value == undefined) {
-    return;
-  }
-  if (secret_key.value == undefined) {
-    return;
-  }
-  if (!kraken.value?.checked && !binance.value?.checked) {
-    errorMessage.value = "Please select an exchange";
-    return;
-  }
-  let exchange: Exchange = "Binance";
-  if (kraken.value?.checked) {
-    exchange = "Kraken";
-  }
-  const data: INewKey = {
-    name: name.value?.value,
-    public_key: api_key.value?.value,
-    secret_key: secret_key.value?.value,
-    exchange: exchange,
-  };
-  newKey(data).catch((err) => {
-    console.error("Insert failed: " + err);
-    errorMessage.value = "Insert Failed: " + err;
-  });
-}
-</script>
-
 <template>
   <div class="form-container">
     <div class="form-grid">
@@ -59,12 +17,77 @@ function clickHandler() {
     </div>
     <button @click="clickHandler">Submit</button>
     <div class="error-container">
-      <div class="error">
-        {{ errorMessage }}
+      <div v-if="isError" class="error">
+        {{ error }}
+      </div>
+      <div v-else-if="isLoading">Loading ...</div>
+      <div v-else-if="isSuccess">Success !</div>
+      <div v-else-if="message != ''">
+        {{ message }}
       </div>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import { newKey, INewKey, Exchange } from "../api";
+import { useMutation } from "@tanstack/vue-query";
+
+const name = ref<HTMLInputElement | null>(null);
+const api_key = ref<HTMLInputElement | null>(null);
+const secret_key = ref<HTMLInputElement | null>(null);
+const binance = ref<HTMLInputElement | null>(null);
+const kraken = ref<HTMLInputElement | null>(null);
+const message = ref("");
+
+const emits = defineEmits(["newKeyRefresh"]);
+
+const {
+  isLoading,
+  isError,
+  error,
+  isSuccess,
+  mutate: addNewKey,
+} = useMutation({
+  mutationFn: (k: INewKey) => newKey(k),
+  onSuccess: (data, variables, context) => {
+    // Boom baby!
+    emits("newKeyRefresh");
+  },
+});
+
+function clickHandler() {
+  message.value = "";
+  if (!name.value || name.value?.value == "") {
+    message.value = "Please enter a name";
+    return;
+  }
+  if (!api_key.value || api_key.value?.value == "") {
+    message.value = "Please enter the API Key";
+    return;
+  }
+  if (!secret_key.value || secret_key.value?.value == "") {
+    message.value = "Please enter the secret Key";
+    return;
+  }
+  if (!kraken.value?.checked && !binance.value?.checked) {
+    message.value = "Please select an exchange";
+    return;
+  }
+  let exchange: Exchange = "Binance";
+  if (kraken.value?.checked) {
+    exchange = "Kraken";
+  }
+  const data: INewKey = {
+    name: name.value?.value,
+    public_key: api_key.value?.value,
+    secret_key: secret_key.value?.value,
+    exchange: exchange,
+  };
+  addNewKey(data);
+}
+</script>
 
 <style scoped>
 .form-grid {
@@ -144,8 +167,9 @@ input[type="text"]:focus {
   justify-content: center;
   position: absolute;
   bottom: 0;
+  text-align: center;
 }
 .error {
-  text-align: center;
+  color: darkred;
 }
 </style>
