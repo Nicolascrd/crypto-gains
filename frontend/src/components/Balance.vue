@@ -1,7 +1,15 @@
 <template>
-  <h1 v-if="isLoadingName">Current Balance : Name Loading..."</h1>
-  <h1 v-else-if="isErrorName">Current Balance : cannot get Name</h1>
-  <h1 v-else-if="isSuccessName">Current Balance : {{ name }}</h1>
+  <h1 v-if="isLoadingBalance">Current Balance loading..."</h1>
+  <h1 v-else-if="isErrorBalance">Current Balance : Error</h1>
+  <h1 v-else-if="isSuccessBalance">Current Balance :</h1>
+  <div>
+    <h3>Accounts :</h3>
+    <v-chip-group filter multiple v-model="selectedAccounts">
+      <v-chip v-for="id of arrayOfSelectedIds" :key="id">{{
+        accountNames.get(id)
+      }}</v-chip>
+    </v-chip-group>
+  </div>
   <div>
     <label>
       Display Stablecoins:
@@ -12,7 +20,10 @@
       <input type="checkbox" v-model="displayFiat" />
     </label>
   </div>
-  <div v-if="oneFailure">Error</div>
+  <div v-if="selectedAccounts.length == 0">
+    Please select at least one account
+  </div>
+  <div v-else-if="oneFailure">Error</div>
   <div v-else-if="oneLoading">Loading...</div>
   <div v-else class="balance-container" v-if="totalSuccess && pricesData">
     <div>
@@ -62,7 +73,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { getBalance, getName, getPrices } from "./../api";
+import { getBalance, getPrices } from "./../api";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "vue-chartjs";
 import { options, colors } from "./chartConfig";
@@ -77,17 +88,12 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const displayStablecoins = ref(false);
 const displayFiat = ref(true);
 const store = useStore();
-const { selectedIds } = storeToRefs(store);
-
-const id = computed(() => {
-  // TEMPORARY
-  for (let id in selectedIds.value) {
-    if (selectedIds.value[id]) {
-      return parseInt(id);
-    }
-  }
-  return 0;
-});
+const { accountNames, arrayOfSelectedIds } = storeToRefs(store);
+const __initSelectedAccounts = [];
+for (let i = 0; i < arrayOfSelectedIds.value.length; i++) {
+  __initSelectedAccounts.push(i);
+}
+const selectedAccounts = ref(__initSelectedAccounts as number[]); // 0 1 2..., NOT IDS
 
 const {
   isLoading: isLoadingBalance,
@@ -95,7 +101,9 @@ const {
   data: balanceData,
   error: errorBalance,
   isSuccess: isSuccessBalance,
-} = useQuery(["balance", id.value], () => getBalance(id.value));
+} = useQuery(["balance", selectedAccounts], () =>
+  getBalance(selectedAccounts.value.map((val) => arrayOfSelectedIds.value[val]))
+);
 
 const balanceAvailable = computed(
   () => !isLoadingBalance.value && !isErrorBalance.value
@@ -106,29 +114,22 @@ const {
   data: pricesData,
   isSuccess: isSuccessPrices,
   isError: isErrorPrices,
-} = useQuery(["prices"], () => getPrices(balanceData.value?.tickers), {
-  enabled: balanceAvailable,
-});
-
-const {
-  isLoading: isLoadingName,
-  data: name,
-  isSuccess: isSuccessName,
-  isError: isErrorName,
-} = useQuery(["name", id.value], () => getName(id.value), {
-  enabled: balanceAvailable,
-});
-
-const oneFailure = computed(
-  () => isErrorBalance.value || isErrorName.value || isErrorPrices.value
+} = useQuery(
+  ["prices", balanceData],
+  () => getPrices(balanceData.value?.tickers),
+  {
+    enabled: balanceAvailable,
+  }
 );
 
+const oneFailure = computed(() => isErrorBalance.value || isErrorPrices.value);
+
 const oneLoading = computed(
-  () => isLoadingBalance.value || isLoadingName.value || isLoadingPrices.value
+  () => isLoadingBalance.value || isLoadingPrices.value
 );
 
 const totalSuccess = computed(
-  () => isSuccessBalance.value && isSuccessPrices.value && isSuccessName.value
+  () => isSuccessBalance.value && isSuccessPrices.value
 );
 
 const allBalances = computed(() => {
@@ -184,9 +185,7 @@ const graphData = computed(() => {
   }
   if (displayStablecoins.value) {
     for (let asset in allBalances.value.stablecoins) {
-      res.values.push(
-        allBalances.value.stablecoins[asset]
-      );
+      res.values.push(allBalances.value.stablecoins[asset]);
       res.colors.push(colors[asset]);
     }
   }

@@ -42,7 +42,7 @@ const defaultParamsPost: RequestInit = {
 
 const BackendURL = "http://localhost:3000/";
 
-export async function getBalance(id: number): Promise<IAccountBalance> {
+export async function getBalance(ids: number[]): Promise<IAccountBalance> {
   /*
   {
     prices: {
@@ -52,13 +52,12 @@ export async function getBalance(id: number): Promise<IAccountBalance> {
     tickers: ["BTC", "BNB"]
   }
   */
-  const response = await fetch(
-    BackendURL + "balance?id=" + String(id),
-    defaultParamsGet
-  );
+  const params = defaultParamsPost;
+  params.body = JSON.stringify(ids);
+  const response = await fetch(BackendURL + "balance", params);
   if (!response.ok) {
     throw Error(
-      "Cannot GET balance informations : " + String(await response.text())
+      "Cannot POST balance informations : " + String(await response.text())
     );
   }
   return response.json();

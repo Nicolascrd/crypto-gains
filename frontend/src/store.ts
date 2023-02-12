@@ -4,9 +4,9 @@ import { IKey } from "./api";
 
 export const useStore = defineStore("main", () => {
   const selectedIds = ref({} as Record<number, boolean>);
+  const accountNames = ref({} as Map<number, string>);
 
   function toggle(id: number) {
-    console.log("toggle id", id);
     selectedIds.value[id] = !selectedIds.value[id];
   }
 
@@ -18,6 +18,14 @@ export const useStore = defineStore("main", () => {
         selectedIds.value[key_id] = false;
       }
     }
+
+    const m = new Map<number, string>();
+
+    res.forEach((value: IKey) => {
+      m.set(parseInt(value.key_id), value.name);
+    });
+
+    accountNames.value = m;
   }
 
   const numberOfSelectedIds = computed(() => {
@@ -30,12 +38,24 @@ export const useStore = defineStore("main", () => {
     return res;
   });
 
+  const arrayOfSelectedIds = computed(() => {
+    let res = [] as number[];
+    for (let key in selectedIds.value) {
+      if (selectedIds.value[key]) {
+        res.push(parseInt(key));
+      }
+    }
+    return res;
+  });
+
   const atLeastOneSelectedId = computed(() => {
     return numberOfSelectedIds.value > 0;
   });
 
   return {
     selectedIds,
+    accountNames,
+    arrayOfSelectedIds,
     toggle,
     numberOfSelectedIds,
     atLeastOneSelectedId,

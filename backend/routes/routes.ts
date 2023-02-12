@@ -5,7 +5,7 @@ const { json, text } = bodyParser;
 import {
   getName,
   getAllKeys,
-  getBalance,
+  balance,
   prices,
   addKey,
   upload,
@@ -18,11 +18,11 @@ const csvParser = text({ type: "*/csv", limit: "5mb" });
 
 // API Routes GET
 router.get("/name", getName);
-router.get("/balance", getBalance);
 router.get("/all_keys", getAllKeys);
 
 // API Routes POST
 router.post("/add_key", jsonParser, addKey);
+router.post("/balance", jsonParser, balance)
 router.post("/prices", jsonParser, prices);
 router.post("/upload", csvParser, upload);
 

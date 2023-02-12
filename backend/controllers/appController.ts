@@ -17,6 +17,7 @@ import {
 import { parse, transform } from "csv/sync";
 import { Request, Response } from "express";
 import { params } from "../params/exchangeSpecifics.js";
+import { mergeBalances } from "./utils.js";
 
 // An import assertion in a dynamic import
 
@@ -118,60 +119,38 @@ export const getAllKeys = async (req: Request, res: Response) => {
   }
 };
 
-export const getBalance = async (req: Request, res: Response) => {
-  let id = 0;
-  if (typeof req.query.id != "string") {
-    res
-      .status(400)
-      .send("To get Name, please include valid id in query params");
+export const balance = async (req: Request, res: Response) => {
+  if (
+    !Array.isArray(req.body) ||
+    req.body == undefined ||
+    req.body.length < 1
+  ) {
+    res.status(400).send("body must be an array of ids, but is : " + req.body);
     return;
   }
-  try {
-    id = parseInt(req.query.id);
-  } catch (e) {
-    res
-      .status(400)
-      .send("To get Balance, please include valid id in query params");
-    return;
-  }
-  if (isNaN(id) || id == undefined || id < 1) {
-    res
-      .status(400)
-      .send("To get Balance, please include valid id in query params");
-    return;
-  }
-  let exchange = "";
-  await getExchange(id).then(
-    (value) => {
-      exchange = value;
-    },
-    (reason) => {
-      res.status(400).send(reason);
-      return;
-    }
-  );
 
-  if (exchange == "Kraken") {
-    await krakenGetAccount(id).then(
-      (value) => {
-        res.status(200).json(value);
-      },
+  const promises = [];
+
+  for (const id of req.body) {
+    promises.push(
+      getExchange(parseInt(id)).then((value) => {
+        if (value == "Kraken") {
+          return krakenGetAccount(parseInt(id));
+        } else {
+          return binanceGetAccount(parseInt(id));
+        }
+      })
+    );
+  }
+
+  await Promise.all(promises)
+    .then((value) => mergeBalances(value))
+    .then(
+      (value) => res.status(200).json(value),
       (reason) => {
         res.status(400).send(reason);
       }
     );
-  }
-
-  if (exchange == "Binance") {
-    await binanceGetAccount(id).then(
-      (value) => {
-        res.status(200).json(value);
-      },
-      (reason) => {
-        res.status(400).send(reason);
-      }
-    );
-  }
 };
 
 export const prices = async (req: Request, res: Response) => {
