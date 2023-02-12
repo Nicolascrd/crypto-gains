@@ -185,7 +185,7 @@ const graphData = computed(() => {
   if (displayStablecoins.value) {
     for (let asset in allBalances.value.stablecoins) {
       res.values.push(
-        allBalances.value.stablecoins[asset] * pricesData.value[asset]
+        allBalances.value.stablecoins[asset]
       );
       res.colors.push(colors[asset]);
     }
