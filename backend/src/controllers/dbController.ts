@@ -22,13 +22,13 @@ export interface IReadKey {
   name: string;
   public_key: string;
 }
-export const insertInto = (newKey: INewKey) => {
+export const insertInto = async (newKey: INewKey) => {
   // object with fields: exchange, name, public_key, private_key
-  const db = newDbConnector();
+  const db = await newDbConnector();
   db.run(
     `INSERT INTO keys(exchange, name, public_key, secret_key) VALUES("${newKey.exchange}", "${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
     [],
-    function (err: Error) {
+    async function (err: Error) {
       if (err) {
         console.error("Failed inserting new row in DB");
         throw err;
@@ -40,13 +40,13 @@ export const insertInto = (newKey: INewKey) => {
   db.close();
 };
 
-export const getNameFromId = (id: number) => {
-  const db = newDbConnector();
+export const getNameFromId = async (id: number) => {
+  const db = await newDbConnector();
   return new Promise<string>(function (resolve, reject) {
     db.all(
       `SELECT name FROM keys WHERE key_id = ${id}`,
       [],
-      (err: Error, rows: { name: string }[]) => {
+      async (err: Error, rows: { name: string }[]) => {
         console.log("any all keys", rows);
         if (err) {
           return reject(err);
@@ -65,13 +65,13 @@ export const getNameFromId = (id: number) => {
   });
 };
 
-export const getExchange = (id: number) => {
-  const db = newDbConnector();
+export const getExchange = async (id: number) => {
+  const db = await newDbConnector();
   return new Promise<Exchange>(function (resolve, reject) {
     db.all(
       `SELECT exchange FROM keys WHERE key_id = ${id}`,
       [],
-      (err: Error, rows: { exchange: Exchange }[]) => {
+      async (err: Error, rows: { exchange: Exchange }[]) => {
         console.log("any all keys", rows);
         if (err) {
           console.error(err);
@@ -88,13 +88,13 @@ export const getExchange = (id: number) => {
   });
 };
 
-export const allKeys = () => {
-  const db = newDbConnector();
+export const allKeys = async () => {
+  const db = await newDbConnector();
   return new Promise<IReadKey[]>(function (resolve, reject) {
     db.all(
       "SELECT key_id, exchange, name, public_key FROM keys",
       [],
-      (err: Error, rows: IReadKey[]) => {
+      async (err: Error, rows: IReadKey[]) => {
         console.log("any all keys", rows);
         if (err) {
           return reject(err);
@@ -112,8 +112,8 @@ export interface IPublicAndSecretKey {
   secret_key: string;
 }
 
-export const publicAndSecretKey = (id: number) => {
-  const db = newDbConnector();
+export const publicAndSecretKey = async (id: number) => {
+  const db = await newDbConnector();
 
   return new Promise<IPublicAndSecretKey>(function (resolve, reject) {
     db.all(
@@ -142,8 +142,8 @@ export const publicAndSecretKey = (id: number) => {
   });
 };
 
-export const addRecords = (recordsArr: IDepositRecord[]) => {
-  const db = newDbConnector();
+export const addRecords = async (recordsArr: IDepositRecord[]) => {
+  const db = await newDbConnector();
 
   let str =
     "INSERT INTO depositsWithdrawals(account, utc_time, asset, change) VALUES";
@@ -163,10 +163,11 @@ export const addRecords = (recordsArr: IDepositRecord[]) => {
       );
     }
   });
+  db.close();
 };
 
-const newDbConnector = () => {
-  const db = new Database("./db/cryptoGains.db", (err: Error | null) => {
+const newDbConnector = async () => {
+  const db = new Database("./db/cryptoGains.db", async (err: Error | null) => {
     if (err) {
       throw err;
     }

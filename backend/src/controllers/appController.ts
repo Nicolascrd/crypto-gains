@@ -21,7 +21,7 @@ import { mergeBalances } from "./utils.js";
 
 // An import assertion in a dynamic import
 
-export const addKey = (req: Request, res: Response) => {
+export const addKey = async (req: Request, res: Response) => {
   if (
     req.body.exchange == undefined ||
     !params.exchanges.includes(req.body.exchange)
@@ -62,7 +62,7 @@ export const addKey = (req: Request, res: Response) => {
   }
 
   try {
-    insertInto(req.body);
+    await insertInto(req.body);
   } catch (e) {
     res.status(400).send(e);
     return;
@@ -84,39 +84,29 @@ export const getName = async (req: Request, res: Response) => {
       .send("To get Name, please include valid id in query params");
     return;
   }
-  try {
-    await getNameFromId(id).then(
-      (value) => {
-        res.status(200).send(value);
-        return;
-      },
-      (reason) => {
-        res.status(404).send(reason);
-        return;
-      }
-    );
-  } catch (e) {
-    res.status(400).send(e);
-    return;
-  }
+  await getNameFromId(id).then(
+    (value) => {
+      res.status(200).send(value);
+      return;
+    },
+    (reason) => {
+      res.status(404).send(reason);
+      return;
+    }
+  );
 };
 
 export const getAllKeys = async (req: Request, res: Response) => {
-  try {
-    await allKeys().then(
-      (value) => {
-        res.status(200).send(value);
-        return;
-      },
-      (reason) => {
-        res.status(404).send(reason);
-        return;
-      }
-    );
-  } catch (e) {
-    res.status(400).send(e);
-    return;
-  }
+  await allKeys().then(
+    async (value) => {
+      res.status(200).send(value);
+      return;
+    },
+    async (reason) => {
+      res.status(404).send(reason);
+      return;
+    }
+  );
 };
 
 export const balance = async (req: Request, res: Response) => {
