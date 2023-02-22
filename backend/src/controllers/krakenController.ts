@@ -1,5 +1,5 @@
-import KrakenClient from "ts-kraken-api";
 import { params } from "../params/exchangeSpecifics.js";
+import { KrakenClient } from "ts-kraken-api";
 import { publicAndSecretKey } from "./dbController.js";
 import { GetAccount } from "./interfaces.js";
 

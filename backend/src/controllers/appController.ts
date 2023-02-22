@@ -132,6 +132,13 @@ export const balance = async (req: Request, res: Response) => {
   const promises = [];
 
   for (const id of req.body) {
+    const idInt = parseInt(id);
+    if (isNaN(idInt)) {
+      res
+        .status(400)
+        .send("body must be an array of ids (integers), but is : " + req.body);
+      return;
+    }
     promises.push(
       getExchange(parseInt(id)).then((value) => {
         if (value == "Kraken") {
