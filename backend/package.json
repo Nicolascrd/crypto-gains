@@ -7,7 +7,7 @@
     "build": "tsc --build",
     "start": "node ./dist/index.js",
     "launch": "npm run build && npm run start",
-    "test": "npm run __copy_db && mocha && npm run __retrieve_db",
+    "test": "npm run __copy_db && mocha ; npm run __retrieve_db",
     "__copy_db": "cp ./db/cryptoGains.db ./db/cryptoGains_saved.db",
     "__retrieve_db": "rm ./db/cryptoGains.db && mv ./db/cryptoGains_saved.db ./db/cryptoGains.db"
   },
