@@ -10,15 +10,16 @@
       }}</v-chip>
     </v-chip-group>
   </div>
-  <div>
-    <label>
-      Display Stablecoins:
-      <input type="checkbox" v-model="displayStablecoins" />
-    </label>
-    <label>
-      Display Fiat:
-      <input type="checkbox" v-model="displayFiat" />
-    </label>
+  <div class="checkboxes">
+    <v-checkbox
+      v-model="displayStablecoins"
+      label="Display Stablecoins"
+    ></v-checkbox>
+    <v-checkbox v-model="displayFiat" label="Display Fiat"></v-checkbox>
+    <v-checkbox
+      v-model="displaySmallAmounts"
+      label="Display Small Amounts"
+    ></v-checkbox>
   </div>
   <div v-if="selectedAccounts.length == 0">
     Please select at least one account
@@ -27,43 +28,55 @@
   <div v-else-if="oneLoading">Loading...</div>
   <div v-else class="balance-container" v-if="totalSuccess && pricesData">
     <div>
-      <table>
+      <v-table height="600" fixed-header fixed-footer density="compact">
         <thead>
-          <th>Asset</th>
-          <th>Amount</th>
-          <th>Value ($)</th>
+          <tr>
+            <th class="text-left">Asset</th>
+            <th class="text-left">Amount</th>
+            <th class="text-left">Value ($)</th>
+          </tr>
         </thead>
-        <tr v-for="(bal, asset) in allBalances.crypto" :key="asset">
-          <td>{{ asset }}</td>
-          <td>
-            {{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}
-          </td>
-          <td>{{ decimalRound(pricesData[asset] * bal, 2) }}</td>
-        </tr>
-        <tr
-          v-for="(bal, asset) in allBalances.stablecoins"
-          v-if="displayStablecoins"
-          :key="asset"
-        >
-          <td>{{ asset }}</td>
-          <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
-          <td>{{ decimalRound(bal, 2) }}</td>
-        </tr>
-        <tr
-          v-for="(bal, asset) in allBalances.fiat"
-          v-if="displayFiat"
-          :key="asset"
-        >
-          <td>{{ asset }}</td>
-          <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
-          <td>{{ decimalRound(bal, 2) }}</td>
-        </tr>
-        <tr>
-          <td>Total</td>
-          <td>-</td>
-          <td>{{ totalDollarValue }}</td>
-        </tr>
-      </table>
+        <tbody>
+          <tr v-for="(bal, asset) in allBalances.crypto" :key="asset">
+            <template v-if="displaySmallAmounts || pricesData[asset] * bal > 1">
+              <td>{{ asset }}</td>
+              <td>
+                {{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}
+              </td>
+              <td>{{ decimalRound(pricesData[asset] * bal, 2) }}</td>
+            </template>
+          </tr>
+          <tr
+            v-for="(bal, asset) in allBalances.stablecoins"
+            v-if="displayStablecoins"
+            :key="asset"
+          >
+            <template v-if="displaySmallAmounts || bal > 1">
+              <td>{{ asset }}</td>
+              <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
+              <td>{{ decimalRound(bal, 2) }}</td>
+            </template>
+          </tr>
+          <tr
+            v-for="(bal, asset) in allBalances.fiat"
+            v-if="displayFiat"
+            :key="asset"
+          >
+            <template v-if="displaySmallAmounts || bal > 1">
+              <td>{{ asset }}</td>
+              <td>{{ bal > 1 ? decimalRound(bal, 2) : bal.toPrecision(3) }}</td>
+              <td>{{ decimalRound(bal, 2) }}</td>
+            </template>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td>&nbsp;-</td>
+            <td>{{ totalDollarValue }}</td>
+          </tr>
+        </tfoot>
+      </v-table>
     </div>
     <div class="chart">
       <Pie :data="{ labels: labels, datasets: datasets }" :options="options" />
@@ -86,7 +99,8 @@ import { useQuery } from "@tanstack/vue-query";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const displayStablecoins = ref(false);
-const displayFiat = ref(true);
+const displayFiat = ref(false);
+const displaySmallAmounts = ref(false);
 const store = useStore();
 const { accountNames, arrayOfSelectedIds } = storeToRefs(store);
 const __initSelectedAccounts = [];
@@ -225,79 +239,24 @@ const totalDollarValue = computed(() => {
       res += allBalances.value.fiat[fiat] * pricesData.value[fiat];
     }
   }
-  return res;
+  return res > 1 ? decimalRound(res, 2) : res.toPrecision(3);
 });
 </script>
 
 <style scoped>
-/* The switch - the box around the sl er */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-/* Hide default HTML checkbox */
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* The slider */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
-}
-
-input:checked + .slider {
-  background-color: var(--light-green);
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px var(--light-green);
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
-
-.balance-container {
-  display: flex;
-}
 .chart {
-  /*max-width: 500px;*/
   margin-left: 50px;
+  max-width: 400px;
+  max-height: 500px;
+}
+.checkboxes {
+  display: flex;
+  justify-content: flex-start;
+  --v-hover-opacity: 0.05;
+  /* should be set but is not for some reason */
+}
+.balance-container {
+  display: grid;
+  grid-template-columns: 1fr 33%;
 }
 </style>

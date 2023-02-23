@@ -4,24 +4,28 @@
   <div v-else-if="allKeys?.length">
     Please Select the key(s) corresponding to your desired account.<br />
     You have to select at least one key to access the rest of the app
-    <table>
+    <v-table>
       <thead class="thead">
-        <th>Key ID</th>
-        <th>Exchange</th>
-        <th>Key Name</th>
-        <th>Public Key</th>
+        <tr>
+          <th>Key ID</th>
+          <th>Exchange</th>
+          <th>Key Name</th>
+          <th>Public Key</th>
+        </tr>
       </thead>
-      <tr
-        v-for="row of allKeys"
-        @click="toggle(parseInt(row.key_id))"
-        :class="{ selected: selectedIds[parseInt(row.key_id)] }"
-      >
-        <td>{{ row.key_id }}</td>
-        <td>{{ row.exchange }}</td>
-        <td>{{ row.name }}</td>
-        <td>{{ row.public_key }}</td>
-      </tr>
-    </table>
+      <tbody>
+        <tr
+          v-for="row of allKeys"
+          @click="toggle(parseInt(row.key_id))"
+          :class="{ selected: selectedIds[parseInt(row.key_id)] }"
+        >
+          <td>{{ row.key_id }}</td>
+          <td>{{ row.exchange }}</td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.public_key }}</td>
+        </tr>
+      </tbody>
+    </v-table>
   </div>
   <div v-else>
     Please Add a Key in order to use the app.
@@ -63,6 +67,9 @@ tr {
 }
 .thead {
   border: 1px solid var(--light-green);
+}
+.thead > th {
+  text-align: left;
 }
 tr:hover {
   border: 1px solid var(--dark-green);
