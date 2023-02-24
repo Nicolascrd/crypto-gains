@@ -1,42 +1,38 @@
 <template>
   <div class="sidebar">
-    <div
-      class="sidebar-element"
-      :class="{ selected: router.currentRoute.value.path == paths.home }"
-      @click="router.push(paths.home)"
-    >
-      <div>HOME</div>
-    </div>
-    <div
-      class="sidebar-element"
-      :class="{
-        selected: router.currentRoute.value.path == paths.balance,
-        block: !atLeastOneSelectedId,
-      }"
-      @click="atLeastOneSelectedId && router.push(paths.balance)"
-    >
-      <div>BALANCE</div>
-    </div>
-    <div
-      class="sidebar-element"
-      :class="{
-        selected: router.currentRoute.value.path == paths.deposits,
-        block: !atLeastOneSelectedId,
-      }"
-      @click="atLeastOneSelectedId && router.push(paths.deposits)"
-    >
-      <div>DEPOSITS</div>
-    </div>
-    <div
-      class="sidebar-element"
-      :class="{
-        selected: router.currentRoute.value.path == paths.upload,
-        block: !atLeastOneSelectedId,
-      }"
-      @click="atLeastOneSelectedId && router.push(paths.upload)"
-    >
-      <div>UPLOAD</div>
-    </div>
+    <v-list lines="one">
+      <v-list-item
+        title="HOME"
+        class="sidebar-element v-theme-light"
+        :active="router.currentRoute.value.path == paths.home"
+        @click="router.push(paths.home)"
+      >
+      </v-list-item>
+      <v-list-item
+        title="BALANCE"
+        class="sidebar-element v-theme-light"
+        :active="router.currentRoute.value.path == paths.balance"
+        :disabled="!atLeastOneSelectedId"
+        @click="atLeastOneSelectedId && router.push(paths.balance)"
+      >
+      </v-list-item>
+      <v-list-item
+        title="DEPOSITS"
+        class="sidebar-element v-theme-light"
+        :active="router.currentRoute.value.path == paths.deposits"
+        :disabled="!atLeastOneSelectedId"
+        @click="atLeastOneSelectedId && router.push(paths.deposits)"
+      >
+      </v-list-item>
+      <v-list-item
+        title="UPLOAD"
+        class="sidebar-element v-theme-light"
+        :active="router.currentRoute.value.path == paths.upload"
+        :disabled="!atLeastOneSelectedId"
+        @click="atLeastOneSelectedId && router.push(paths.upload)"
+      >
+      </v-list-item>
+    </v-list>
   </div>
 </template>
 
@@ -70,23 +66,6 @@ const { atLeastOneSelectedId } = storeToRefs(useStore());
   justify-content: center;
   cursor: pointer;
   position: relative;
-}
-.sidebar-element.selected {
-  font-weight: 600;
-  color: var(--light-green);
-}
-.sidebar-element.selected:before {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 20%;
-  height: 60%;
-  width: 1px; /* or 100px */
-  border-right: 3px solid var(--light-green);
-}
-.sidebar-element:hover {
-  font-weight: 600;
-  color: var(--light-green);
 }
 .sidebar-element.block {
   color: lightgray;

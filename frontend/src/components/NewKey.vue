@@ -1,30 +1,81 @@
 <template>
   <div class="form-container">
-    <div class="form-grid">
-      <label>Exchange: </label>
-      <div class="wrapper">
-        <input ref="binance" id="binance" name="exchange" type="radio" />
-        <input ref="kraken" id="kraken" name="exchange" type="radio" />
-        <label for="binance" class="option binance">Binance</label>
-        <label for="kraken" class="option kraken">Kraken</label>
-      </div>
-      <label for="name">Name: </label>
-      <input ref="name" id="name" name="name" type="text" />
-      <label for="api_key">API Key (public): </label>
-      <input ref="api_key" id="api_key" name="api_key" type="text" />
-      <label for="secret_key">Secret Key (private): </label>
-      <input ref="secret_key" id="secret_key" name="secret_key" type="text" />
-    </div>
-    <button @click="clickHandler">Submit</button>
-    <div class="error-container">
-      <div v-if="isError" class="error">
+    <h3>New Key :</h3>
+    <v-form class="form" ref="form">
+      <v-select
+        v-model="exchangeName"
+        label="Exchange"
+        :items="['Binance', 'Kraken']"
+        :rules="rulesSelectInput"
+        @update:menu="
+          () => {
+            formHandlingMessage = '';
+          }
+        "
+      ></v-select>
+      <v-text-field
+        ref="name"
+        class="input-field"
+        label="Key Name"
+        :rules="rulesTextInput"
+        hide-details="auto"
+        hint="You can give any name to your key"
+        variant="outlined"
+        @update:focused="
+          () => {
+            formHandlingMessage = '';
+          }
+        "
+      ></v-text-field>
+
+      <v-text-field
+        ref="api_key"
+        class="input-field"
+        label="API Key (public)"
+        hint="Make sure your key has read-only rights"
+        :rules="rulesTextInput"
+        hide-details="auto"
+        variant="outlined"
+        @update:focused="
+          () => {
+            formHandlingMessage = '';
+          }
+        "
+      ></v-text-field>
+
+      <v-text-field
+        ref="secret_key"
+        class="input-field"
+        label="Secret Key (private)"
+        :rules="rulesTextInput"
+        hide-details="auto"
+        variant="outlined"
+        type="password"
+        @update:focused="
+          () => {
+            formHandlingMessage = '';
+          }
+        "
+      ></v-text-field>
+    </v-form>
+    <div class="validation">
+      <v-btn @click="clickHandler" color="grey-darken-4">Submit</v-btn>
+      <v-alert v-if="isError" color="error" icon="mdi-alert-circle">
         {{ error }}
-      </div>
-      <div v-else-if="isLoading">Loading ...</div>
-      <div v-else-if="isSuccess">Success !</div>
-      <div v-else-if="message != ''">
-        {{ message }}
-      </div>
+      </v-alert>
+      <v-alert v-else-if="isLoading" color="info" icon="mdi-loading">
+        Loading ...
+      </v-alert>
+      <v-alert v-else-if="isSuccess" color="success" icon="mdi-check-circle">
+        Success !
+      </v-alert>
+      <v-alert
+        v-else-if="formHandlingMessage != ''"
+        color="error"
+        icon="mdi-alert-circle"
+      >
+        {{ formHandlingMessage }}
+      </v-alert>
     </div>
   </div>
 </template>
@@ -37,9 +88,9 @@ import { useMutation } from "@tanstack/vue-query";
 const name = ref<HTMLInputElement | null>(null);
 const api_key = ref<HTMLInputElement | null>(null);
 const secret_key = ref<HTMLInputElement | null>(null);
-const binance = ref<HTMLInputElement | null>(null);
-const kraken = ref<HTMLInputElement | null>(null);
-const message = ref("");
+const form = ref<any | null>(null);
+const formHandlingMessage = ref("");
+const exchangeName = ref("");
 
 const emits = defineEmits(["newKeyRefresh"]);
 
@@ -52,124 +103,57 @@ const {
 } = useMutation({
   mutationFn: (k: INewKey) => newKey(k),
   onSuccess: (data, variables, context) => {
-    // Boom baby!
     emits("newKeyRefresh");
+    form.value?.reset();
   },
 });
 
+const rulesTextInput = [(value: string) => (value.length ? true : "Required.")];
+const rulesSelectInput = [
+  (value: string) =>
+    ["Kraken", "Binance"].includes(value) || "Must select one exchange",
+];
+
 function clickHandler() {
-  message.value = "";
+  formHandlingMessage.value = "";
+  if (!exchangeName.value || exchangeName.value == "") {
+    formHandlingMessage.value = "Please select an Exchange";
+    return;
+  }
   if (!name.value || name.value?.value == "") {
-    message.value = "Please enter a name";
+    formHandlingMessage.value = "Please enter a Key Name";
     return;
   }
   if (!api_key.value || api_key.value?.value == "") {
-    message.value = "Please enter the API Key";
+    formHandlingMessage.value = "Please enter the API Key";
     return;
   }
   if (!secret_key.value || secret_key.value?.value == "") {
-    message.value = "Please enter the secret Key";
+    formHandlingMessage.value = "Please enter the Secret Key";
     return;
-  }
-  if (!kraken.value?.checked && !binance.value?.checked) {
-    message.value = "Please select an exchange";
-    return;
-  }
-  let exchange: Exchange = "Binance";
-  if (kraken.value?.checked) {
-    exchange = "Kraken";
   }
   const data: INewKey = {
     name: name.value?.value,
     public_key: api_key.value?.value,
     secret_key: secret_key.value?.value,
-    exchange: exchange,
+    exchange: exchangeName.value as Exchange,
   };
   addNewKey(data);
 }
 </script>
 
 <style scoped>
-.form-grid {
-  display: grid;
-  grid-template-columns: 20% auto;
-  column-gap: 3%;
+.form > .input-field {
+  margin-bottom: 1rem;
 }
 .form-container {
-  max-width: 840px;
-  position: relative;
-  padding-bottom: 70px;
+  margin-top: 1rem;
+  max-width: 800px;
 }
-.form-container > button {
-  position: absolute;
-  bottom: 20px;
-  right: 0;
+.form-container > h3 {
+  margin-bottom: 0.5rem;
 }
-label {
-  font-size: 16px;
-  font-weight: 600;
-  padding-top: 16px;
-  text-align: right;
-}
-input[type="text"] {
-  padding: 12px 20px;
-  margin: 8px 0;
-  box-sizing: border-box;
-  border: 2px solid var(--light-green);
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-input[type="radio"] {
-  display: none;
-}
-.wrapper {
-  display: inline-flex;
-  background: #fff;
-  align-items: center;
-  height: 80px;
-  justify-content: space-evenly;
-  border-radius: 5px;
-  padding: 20px 15px;
-}
-.wrapper .option {
-  background: #fff;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  margin: 0 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  padding: 0 10px;
-  border: 2px solid lightgrey;
-  transition: all 0.3s ease;
-}
-
-#binance:checked:checked ~ .binance {
-  border-color: var(--binance-yellow);
-  background: var(--binance-yellow);
-}
-#kraken:checked:checked ~ .kraken {
-  border-color: var(--kraken-blue);
-  background: var(--kraken-blue);
-  color: white;
-}
-
-input[type="text"]:focus {
-  outline-color: var(--dark-green);
-}
-
-.error-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  position: absolute;
-  bottom: 0;
-  text-align: center;
-}
-.error {
-  color: darkred;
+.validation > * {
+  margin-bottom: 1rem;
 }
 </style>

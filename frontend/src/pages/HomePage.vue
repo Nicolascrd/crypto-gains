@@ -3,12 +3,12 @@
     <SideBar />
   </div>
   <div class="page-container">
-    <SelectKeys />
+    <AllKeys />
   </div>
 </template>
 
 <script setup lang="ts">
-import SelectKeys from "../components/SelectKeys.vue";
+import AllKeys from "../components/AllKeys.vue";
 import SideBar from "../components/SideBar.vue";
 </script>
 

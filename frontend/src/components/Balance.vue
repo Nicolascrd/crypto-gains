@@ -25,7 +25,7 @@
     Please select at least one account
   </div>
   <div v-else-if="oneFailure">Error</div>
-  <div v-else-if="oneLoading">Loading...</div>
+  <div v-else-if="oneLoading">Fetching latest prices...</div>
   <div v-else class="balance-container" v-if="totalSuccess && pricesData">
     <div>
       <v-table height="600" fixed-header fixed-footer density="compact">
