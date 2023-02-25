@@ -1,6 +1,6 @@
 <template>
   <div class="upload-container">
-    <h1>Upload</h1>
+    <h1>Upload Deposit / Withdrawal statements</h1>
     <v-form ref="form">
       <div class="section">
         <v-select
@@ -37,7 +37,9 @@
         ></v-file-input>
       </div>
       <div class="section" v-if="status >= Estatus.selected">
-        <v-btn @click="upload()">upload</v-btn>
+        <v-btn @click="upload()"
+          ><v-icon icon="mdi-rocket-launch"></v-icon>&nbsp;upload</v-btn
+        >
       </div>
       <div class="section" v-if="isLoading || isError || isSuccess">
         <v-alert v-if="isLoading" color="info" icon="mdi-information">
@@ -92,6 +94,7 @@ const {
   mutationFn: (s: INewStatement) => uploadCSV(s),
   onSuccess: () => {
     form.value?.reset();
+    status.value = Estatus.exchangeSelection;
   },
 });
 
