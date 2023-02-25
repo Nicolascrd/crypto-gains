@@ -1,10 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { IKey } from "./api";
+import { Exchange, IKey } from "./api";
 
 export const useStore = defineStore("main", () => {
   const selectedIds = ref({} as Record<number, boolean>);
   const accountNames = ref({} as Map<number, string>);
+  const accountExchange = ref({} as Map<number, Exchange>);
 
   function toggle(id: number) {
     selectedIds.value[id] = !selectedIds.value[id];
@@ -20,12 +21,16 @@ export const useStore = defineStore("main", () => {
     }
 
     const m = new Map<number, string>();
+    const mEx = new Map<number, Exchange>();
 
     res.forEach((value: IKey) => {
-      m.set(parseInt(value.key_id), value.name);
+      const id = parseInt(value.key_id);
+      m.set(id, value.name);
+      mEx.set(id, value.exchange);
     });
 
     accountNames.value = m;
+    accountExchange.value = mEx;
   }
 
   const numberOfSelectedIds = computed(() => {
@@ -55,6 +60,7 @@ export const useStore = defineStore("main", () => {
   return {
     selectedIds,
     accountNames,
+    accountExchange,
     arrayOfSelectedIds,
     toggle,
     numberOfSelectedIds,

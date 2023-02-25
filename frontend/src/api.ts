@@ -21,6 +21,11 @@ export interface IAccountBalance {
   tickers: Array<string>;
 }
 
+export interface INewStatement {
+  id: number;
+  files: FileList;
+}
+
 const defaultParamsGet: RequestInit = {
   method: "GET",
   mode: "cors",
@@ -120,16 +125,31 @@ export async function getAllKeys(): Promise<IKey[] | null> {
   return res;
 }
 
-export async function uploadCSV(id: number, file: File): Promise<string> {
+export async function uploadCSV(s: INewStatement): Promise<null> {
   const params = defaultParamsPost;
   params.headers = {
     "Content-Type": "text/csv",
   };
-  params.body = await file.text(); // body data type must match "Content-Type" header
 
-  const response = await fetch(BackendURL + "upload?id=" + String(id), params);
-  if (!response.ok) {
-    throw Error("Cannot upload csv file: " + String(await response.text()));
+  const promises = [];
+  for (let i = 0; i < s.files.length; i++) {
+    const f = s.files.item(i);
+    if (f !== null) {
+      params.body = await f.text();
+    }
+    promises.push(fetch(BackendURL + "upload?id=" + String(s.id), params));
   }
-  return response.text();
+  await Promise.all(promises).then(
+    (responses) => {
+      responses.forEach(async (resp, index) => {
+        if (!resp.ok) {
+          throw Error(`Cannot upload file n°${index} : ${await resp.text()}`);
+        }
+      });
+    },
+    (reason) => {
+      throw reason;
+    }
+  );
+  return null;
 }
