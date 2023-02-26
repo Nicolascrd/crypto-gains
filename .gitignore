@@ -14,6 +14,7 @@ dist-ssr
 
 # db file
 backend/db/cryptoGains.db
+backend/prisma/migrations
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./../db/cryptoGains.db"
+}
+
+model depositsWithdrawals {
+  dw_id    Int    @id @default(autoincrement())
+  account  Int
+  utc_time BigInt
+  asset    String
+  change   Float
+  keys     keys   @relation(fields: [account], references: [key_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([account, utc_time, asset, change], map: "sqlite_autoindex_depositsWithdrawals_1")
+}
+
+model keys {
+  key_id              Int                   @id @default(autoincrement())
+  exchange            String
+  name                String
+  public_key          String
+  secret_key          String
+  depositsWithdrawals depositsWithdrawals[]
+}

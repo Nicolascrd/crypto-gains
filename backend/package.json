@@ -9,12 +9,13 @@
     "launch": "npm run build && npm run start",
     "test": "npm run __copy_db && mocha ; npm run __retrieve_db",
     "__copy_db": "cp ./db/cryptoGains.db ./db/cryptoGains_saved.db",
-    "__retrieve_db": "rm ./db/cryptoGains.db && mv ./db/cryptoGains_saved.db ./db/cryptoGains.db"
+    "__retrieve_db": "rm ./db/cryptoGains.db && mv ./db/cryptoGains_saved.db ./db/cryptoGains.db",
   },
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@prisma/client": "^4.10.1",
     "binance": "^2.2.10",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
@@ -37,6 +38,7 @@
     "chai-as-promised": "^7.1.1",
     "eslint": "^8.33.0",
     "mocha": "^10.2.0",
+    "prisma": "^4.10.1",
     "supertest": "^6.3.3",
     "ts-node": "^10.3.0",
     "tslib": "^2.3.0",

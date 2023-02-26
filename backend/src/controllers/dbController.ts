@@ -1,5 +1,6 @@
-import sqlite3 from "sqlite3";
-const { Database } = sqlite3;
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export type Exchange = "Kraken" | "Binance";
 
@@ -23,88 +24,60 @@ export interface IReadKey {
   public_key: string;
 }
 export const insertInto = async (newKey: INewKey) => {
-  // object with fields: exchange, name, public_key, private_key
-  const db = await newDbConnector();
-  db.run(
-    `INSERT INTO keys(exchange, name, public_key, secret_key) VALUES("${newKey.exchange}", "${newKey.name}", "${newKey.public_key}", "${newKey.secret_key}")`,
-    [],
-    async function (err: Error) {
-      if (err) {
-        console.error("Failed inserting new row in DB");
-        throw err;
-      } else {
-        console.log("New row inserted in DB,  name = ", newKey.name);
-      }
-    }
-  );
-  db.close();
+  await prisma.keys.create({
+    data: newKey,
+  });
+  console.log("New row inserted in DB, name = ", newKey.name);
 };
 
 export const getNameFromId = async (id: number) => {
-  const db = await newDbConnector();
-  return new Promise<string>(function (resolve, reject) {
-    db.all(
-      `SELECT name FROM keys WHERE key_id = ${id}`,
-      [],
-      async (err: Error, rows: { name: string }[]) => {
-        console.log("any all keys", rows);
-        if (err) {
-          return reject(err);
-        }
-        console.log(`retrieved ${rows.length} keys in the local db`);
-        if (rows.length != 1) {
-          return reject("No keys corresponding to ID " + id);
-        }
-        if (rows[0].name == undefined) {
-          return reject("Name can't be undefined");
-        }
-        resolve(rows[0].name);
+  // const db = await newDbConnector();
+
+  return prisma.keys
+    .findUnique({
+      where: {
+        key_id: id,
+      },
+      select: {
+        name: true,
+      },
+    })
+    .catch((e) => {
+      throw e;
+    })
+    .then((value) => {
+      if (value == null) {
+        throw Error("No key corresponding to key id " + String(id));
+      } else {
+        return value.name;
       }
-    );
-    db.close();
-  });
+    });
 };
 
 export const getExchange = async (id: number) => {
-  const db = await newDbConnector();
-  return new Promise<Exchange>(function (resolve, reject) {
-    db.all(
-      `SELECT exchange FROM keys WHERE key_id = ${id}`,
-      [],
-      async (err: Error, rows: { exchange: Exchange }[]) => {
-        console.log("any all keys", rows);
-        if (err) {
-          console.error(err);
-          return reject(err);
-        }
-        console.log(`retrieved ${rows.length} keys in the local db`);
-        if (rows.length != 1) {
-          return reject("No keys corresponding to ID " + id);
-        }
-        resolve(rows[0].exchange);
+  return prisma.keys
+    .findUnique({
+      where: {
+        key_id: id,
+      },
+      select: {
+        exchange: true,
+      },
+    })
+    .catch((e) => {
+      throw e;
+    })
+    .then((value) => {
+      if (value == null) {
+        throw Error("No key corresponding to key id " + String(id));
+      } else {
+        return value.exchange;
       }
-    );
-    db.close();
-  });
+    });
 };
 
 export const allKeys = async () => {
-  const db = await newDbConnector();
-  return new Promise<IReadKey[]>(function (resolve, reject) {
-    db.all(
-      "SELECT key_id, exchange, name, public_key FROM keys",
-      [],
-      async (err: Error, rows: IReadKey[]) => {
-        console.log("any all keys", rows);
-        if (err) {
-          return reject(err);
-        }
-        console.log(`retrieved ${rows.length} keys in the local db`);
-        resolve(rows);
-      }
-    );
-    db.close();
-  });
+  return await prisma.keys.findMany();
 };
 
 export interface IPublicAndSecretKey {
@@ -113,65 +86,52 @@ export interface IPublicAndSecretKey {
 }
 
 export const publicAndSecretKey = async (id: number) => {
-  const db = await newDbConnector();
-
-  return new Promise<IPublicAndSecretKey>(function (resolve, reject) {
-    db.all(
-      `SELECT public_key, secret_key FROM keys WHERE key_id = ${id}`,
-      [],
-      (err: Error, rows: IPublicAndSecretKey[]) => {
-        if (err) {
-          return reject(err);
-        }
-        console.log(`retrieved ${rows.length} keys in the local db`);
-        if (rows.length != 1) {
-          return reject("No keys corresponding to ID " + id);
-        }
-        const public_key = rows[0].public_key;
-        const secret_key = rows[0].secret_key;
-        if (public_key == undefined) {
-          return reject("Public key can't be undefined");
-        }
-        resolve({
-          public_key,
-          secret_key,
-        });
+  return await prisma.keys
+    .findUnique({
+      where: {
+        key_id: id,
+      },
+      select: {
+        secret_key: true,
+        public_key: true,
+      },
+    })
+    .catch((reason) => {
+      throw reason;
+    })
+    .then((value) => {
+      if (value == null) {
+        throw Error("no keys corresponding to key_id " + String(id));
       }
-    );
-    db.close();
-  });
+      return value;
+    });
 };
 
 export const addRecords = async (recordsArr: IDepositRecord[]) => {
-  const db = await newDbConnector();
+  // const db = await newDbConnector();
 
-  let str =
-    "INSERT INTO depositsWithdrawals(account, utc_time, asset, change) VALUES";
-  for (const rec of recordsArr) {
-    str += `(${rec.key_id}, ${rec.utc_time}, "${rec.asset}", ${rec.change}),`;
+  const depositsArray = [];
+  for (let i = 0; i < recordsArr.length; i++) {
+    depositsArray.push(
+      prisma.depositsWithdrawals.upsert({
+        where: {
+          account_utc_time_asset_change: {
+            account: recordsArr[i].key_id,
+            utc_time: recordsArr[i].utc_time,
+            asset: recordsArr[i].asset,
+            change: recordsArr[i].change,
+          },
+        },
+        create: {
+          account: recordsArr[i].key_id,
+          utc_time: recordsArr[i].utc_time,
+          asset: recordsArr[i].asset,
+          change: recordsArr[i].change,
+        },
+        update: {},
+      })
+    );
   }
-  str = str.slice(0, str.length - 1) + ";";
-  console.log("input:", str);
-  db.run(str, [], (err: Error) => {
-    if (err) {
-      console.error("Failed inserting rows in DB");
-      throw err;
-    } else {
-      console.log(
-        recordsArr.length +
-          " new rows inserted in deposits and withdrawals table"
-      );
-    }
-  });
-  db.close();
-};
 
-const newDbConnector = async () => {
-  const db = new Database("./db/cryptoGains.db", async (err: Error | null) => {
-    if (err) {
-      throw err;
-    }
-    console.log("Connected to the SQLite DB");
-  });
-  return db;
+  await prisma.$transaction(depositsArray); // serializable by default
 };
