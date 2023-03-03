@@ -9,6 +9,7 @@ import {
   prices,
   addKey,
   upload,
+  movements
 } from "../controllers/appController.js";
 
 const router = Router();
@@ -22,8 +23,9 @@ router.get("/all_keys", getAllKeys);
 
 // API Routes POST
 router.post("/add_key", jsonParser, addKey);
-router.post("/balance", jsonParser, balance)
+router.post("/balance", jsonParser, balance);
 router.post("/prices", jsonParser, prices);
 router.post("/upload", csvParser, upload);
+router.post("/movements", jsonParser, movements);
 
 export default router;

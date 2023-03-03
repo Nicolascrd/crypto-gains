@@ -1,7 +1,7 @@
 import { params } from "../params/exchangeSpecifics.js";
 import KrakenClient from "ts-kraken-api";
 import { publicAndSecretKey } from "./dbController.js";
-import { GetAccount } from "./interfaces.js";
+import { GetAccount } from "../interfaces.js";
 
 const clientFromId = async (id: number) => {
   const { public_key, secret_key } = await publicAndSecretKey(id);

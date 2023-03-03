@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { params } from "../params/exchangeSpecifics.js";
 
 const prisma = new PrismaClient();
 
@@ -134,4 +135,62 @@ export const addRecords = async (recordsArr: IDepositRecord[]) => {
   }
 
   await prisma.$transaction(depositsArray); // serializable by default
+};
+
+export interface ITransactionSelector {
+  start: number; // UTC ms
+  end: number; // UTC ms
+  ids: number[];
+}
+
+export const getCryptoRecords = async (selector: ITransactionSelector) => {
+  return prisma.depositsWithdrawals.findMany({
+    where: {
+      account: {
+        in: selector.ids,
+      },
+      utc_time: {
+        lte: selector.end,
+        gte: selector.start,
+      },
+      asset: {
+        notIn: params.fiat,
+      },
+    },
+    select: {
+      asset: true,
+      utc_time: true,
+      dw_id: true,
+      change: true,
+    },
+    orderBy: {
+      utc_time: "asc",
+    },
+  });
+};
+
+export const getFiatRecords = async (selector: ITransactionSelector) => {
+  return prisma.depositsWithdrawals.findMany({
+    where: {
+      account: {
+        in: selector.ids,
+      },
+      utc_time: {
+        lte: selector.end,
+        gte: selector.start,
+      },
+      asset: {
+        in: params.fiat,
+      },
+    },
+    select: {
+      asset: true,
+      utc_time: true,
+      dw_id: true,
+      change: true,
+    },
+    orderBy: {
+      utc_time: "asc",
+    },
+  });
 };

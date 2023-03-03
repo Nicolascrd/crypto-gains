@@ -1,6 +1,6 @@
 import { MainClient } from "binance";
 import { publicAndSecretKey } from "./dbController.js";
-import { GetAccount } from "./interfaces.js";
+import { GetAccount } from "../interfaces.js";
 
 async function clientFromId(id: number) {
   const { public_key, secret_key } = await publicAndSecretKey(id);
