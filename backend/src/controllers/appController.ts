@@ -21,7 +21,7 @@ import { parse, transform } from "csv/sync";
 import { Request, Response } from "express";
 import { params } from "../params/exchangeSpecifics.js";
 import { dateParams } from "./../params/dates.js";
-import { formatToTimeframe, mergeBalances } from "./utils.js";
+import { formatToTimeframe, groupAll, mergeBalances } from "./utils.js";
 
 // An import assertion in a dynamic import
 
@@ -307,6 +307,106 @@ export const movements = async (req: Request, res: Response) => {
                 req.body.end
               )
             );
+          return;
+        },
+        async (reason) => {
+          res.status(400).send(reason);
+          return;
+        }
+      )
+      .catch((reason) => {
+        res.status(400).send(reason);
+        return;
+      });
+  }
+};
+
+export const movementsAgg = async (req: Request, res: Response) => {
+  /*
+  {
+    ids: [1, 3],
+    start: unix,
+    end: unix,
+    timeframe: "D" | "W" | "M" | "Y"
+  }
+  */
+  if (
+    req.body.ids == undefined ||
+    req.body.start == undefined ||
+    req.body.end == undefined ||
+    req.body.crypto == undefined
+  ) {
+    res
+      .status(400)
+      .send("Please include the following fields: ids, start, end, crypto");
+    return;
+  }
+
+  if (Array.isArray(req.body.ids) == false || req.body.ids.length == 0) {
+    res.status(400).send("ids field must be an array of integers");
+    return;
+  }
+  if (typeof req.body.start !== "number") {
+    res.status(400).send("start field must be a number");
+    return;
+  }
+  if (req.body.start < dateParams.limitUnixSeconds) {
+    req.body.start *= 1000;
+  }
+  if (req.body.start < dateParams.firstDate) {
+    res.status(400).send("start time must be after September 2013");
+    return;
+  }
+  if (typeof req.body.end !== "number") {
+    res.status(400).send("end field must be a number");
+    return;
+  }
+  if (req.body.end < dateParams.limitUnixSeconds) {
+    req.body.end *= 1000;
+  }
+  if (req.body.end < req.body.start) {
+    res.status(400).send("end time must be after start time");
+    return;
+  }
+  if (typeof req.body.crypto !== "boolean") {
+    res.status(400).send("crypto field must be a boolean");
+    return;
+  }
+  const filters: ITransactionSelector = {
+    start: req.body.start,
+    end: req.body.end,
+    ids: req.body.ids,
+  };
+  if (req.body.crypto) {
+    await getCryptoRecords(filters)
+      .then(
+        async (value) => {
+          if (value == null) {
+            res.status(400).send("No value");
+            return;
+          }
+          const ans = groupAll(value);
+          res.status(200).json(ans);
+          return;
+        },
+        (reason) => {
+          res.status(400).send(reason);
+          return;
+        }
+      )
+      .catch((reason) => {
+        res.status(400).send(reason);
+        return;
+      });
+  } else {
+    await getFiatRecords(filters)
+      .then(
+        async (value) => {
+          if (value == null) {
+            res.status(400).send("No value");
+            return;
+          }
+          res.status(200).json(groupAll(value));
           return;
         },
         async (reason) => {

@@ -1,4 +1,10 @@
-import { GetAccount, Timeframe, IdwEntry, IdwFormatted } from "../interfaces";
+import {
+  GetAccount,
+  Timeframe,
+  IdwEntry,
+  IdwFormatted,
+  IPlusMinus,
+} from "../interfaces";
 
 export const mergeBalances = (balances: GetAccount[]) => {
   const res: GetAccount = {
@@ -77,6 +83,21 @@ export const formatToTimeframe = (
       : date.getTime() < endDate
   );
 
+  return res;
+};
+
+export const groupAll = (entries: IdwEntry[]) => {
+  const res = {} as Record<string, IPlusMinus>;
+  entries.forEach((entry: IdwEntry) => {
+    if (!(entry.asset in res)) {
+      res[entry.asset] = { "+": 0, "-": 0 };
+    }
+    if (entry.change > 0) {
+      res[entry.asset]["+"] += entry.change;
+    } else {
+      res[entry.asset]["-"] += entry.change;
+    }
+  });
   return res;
 };
 

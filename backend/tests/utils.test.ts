@@ -5,6 +5,7 @@ import {
   getMonday,
   get1stNextMonth,
   get1stJanNextYear,
+  groupAll,
 } from "../src/controllers/utils";
 import { expect } from "chai";
 import { suite, test } from "mocha";
@@ -73,6 +74,49 @@ suite("Utils: get first day of next year", () => {
     );
   });
 });
+
+suite("Utils: groupAll", () => {
+  const entries1: IdwEntry[] = [
+    {
+      asset: "BTC",
+      utc_time: new Date("2021-11-04 10:30:10 UTC").getTime(),
+      dw_id: 1,
+      change: 1,
+    },
+    {
+      asset: "ETH",
+      utc_time: new Date("2021-11-04 11:00:00 UTC").getTime(),
+      dw_id: 1,
+      change: 6,
+    },
+    {
+      asset: "BTC",
+      utc_time: new Date("2021-11-06 01:30:10 UTC").getTime(),
+      dw_id: 1,
+      change: -0.5,
+    },
+    {
+      asset: "BTC",
+      utc_time: new Date("2021-11-06 23:59:59 UTC").getTime(),
+      dw_id: 1,
+      change: 0.5,
+    },
+  ];
+  const result1 = {
+    BTC: {
+      "+": 1.5,
+      "-": -0.5,
+    },
+    ETH: {
+      "+": 6,
+      "-": 0,
+    },
+  };
+  test("Entries 1", () => {
+    expect(groupAll(entries1)).to.deep.equal(result1);
+  });
+});
+
 suite("Utils: format to timeframe", () => {
   const unixStart1 = new Date("2021-11-04 UTC").getTime();
   const unixEnd1 = new Date("2021-11-07 UTC").getTime();

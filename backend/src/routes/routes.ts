@@ -9,7 +9,8 @@ import {
   prices,
   addKey,
   upload,
-  movements
+  movements,
+  movementsAgg,
 } from "../controllers/appController.js";
 
 const router = Router();
@@ -27,5 +28,6 @@ router.post("/balance", jsonParser, balance);
 router.post("/prices", jsonParser, prices);
 router.post("/upload", csvParser, upload);
 router.post("/movements", jsonParser, movements);
+router.post("/movementsAgg", jsonParser, movementsAgg);
 
 export default router;
