@@ -26,6 +26,33 @@ export interface INewStatement {
   files: FileList;
 }
 
+export type Timeframe = "D" | "W" | "M" | "Y";
+
+export interface IMovementsRequest {
+  ids: number[];
+  start: number;
+  end: number;
+  timeframe: Timeframe;
+  crypto: boolean;
+}
+
+export interface IMovementsAggRequest {
+  ids: number[];
+  start: number;
+  end: number;
+  crypto: boolean;
+}
+
+export interface IPlusMinus {
+  "+": number;
+  "-": number;
+}
+
+export interface IdwFormatted {
+  assets: Record<string, IPlusMinus>;
+  start: number;
+}
+
 const defaultParamsGet: RequestInit = {
   method: "GET",
   mode: "cors",
@@ -123,6 +150,30 @@ export async function getAllKeys(): Promise<IKey[] | null> {
   updateIdsFromGet(res);
 
   return res;
+}
+
+export async function getMovements(
+  data: IMovementsRequest
+): Promise<IdwFormatted[]> {
+  const params = defaultParamsPost;
+  params.body = JSON.stringify(data);
+  const response = await fetch(BackendURL + "movements", params);
+  if (!response.ok) {
+    throw Error("Cannot get movements : " + String(await response.text()));
+  }
+  return response.json();
+}
+
+export async function getMovementsAgg(
+  data: IMovementsAggRequest
+): Promise<Record<string, IPlusMinus>> {
+  const params = defaultParamsPost;
+  params.body = JSON.stringify(data);
+  const response = await fetch(BackendURL + "movementsAgg", params);
+  if (!response.ok) {
+    throw Error("Cannot get movementsAgg : " + String(await response.text()));
+  }
+  return response.json();
 }
 
 export async function uploadCSV(s: INewStatement): Promise<null> {
