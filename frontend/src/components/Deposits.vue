@@ -15,6 +15,9 @@
     ></VueDatePicker>
   </div>
   <template v-if="unixdateRange">
+    <ActivityGraph :crypto="tab == 2" :dateRange="unixdateRange"></ActivityGraph>
+  </template>
+  <template v-if="unixdateRange">
     <Movements :crypto="tab == 2" :dateRange="unixdateRange" />
   </template>
 </template>
@@ -22,6 +25,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import Movements from "./Movements.vue";
+import ActivityGraph from "./ActivityGraph.vue"
 import { dateStringToUTCDayStartEpoch } from "./../utils";
 const date = ref<null | string[]>(null);
 
