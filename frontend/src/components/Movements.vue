@@ -1,5 +1,5 @@
 <template>
-  <div>Deposits</div>
+  <h3>Deposits</h3>
   <v-table fixed-header density="compact">
     <thead>
       <tr>
@@ -19,7 +19,7 @@
       </tr>
     </tbody>
   </v-table>
-  <div>Withdrawals</div>
+  <h3>Withdrawals</h3>
   <v-table fixed-header density="compact">
     <thead>
       <tr>
@@ -42,9 +42,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed, watch } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
-import { getMovementsAgg, IPlusMinus } from "../api";
+import { getMovementsAgg } from "../api";
 import { useStore } from "../store";
 import { storeToRefs } from "pinia";
 import { decimalRound } from "../utils";

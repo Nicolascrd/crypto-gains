@@ -9,7 +9,7 @@
     return-object
   ></v-select>
   <div class="chart" v-if="volumeData">
-    <Line :data="volumeData" :option="options" id="line" />
+    <Line :data="volumeData" :options="options" id="line" />
   </div>
 </template>
 
@@ -17,6 +17,7 @@
 import { ref, watch, computed } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { getMovements, getPrices, Timeframe } from "../api";
+import { decimalRoundWrapper } from "../utils";
 import { useStore } from "../store";
 import { storeToRefs } from "pinia";
 import {
@@ -28,9 +29,9 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  InteractionMode,
 } from "chart.js";
 import { Line } from "vue-chartjs";
-import { options } from "./chartConfig";
 import { STABLECOINS } from "../coins";
 
 ChartJS.register(
@@ -40,8 +41,157 @@ ChartJS.register(
   Legend,
   ArcElement,
   Tooltip,
-  LineElement
+  LineElement,
+  Tooltip
 );
+const getOrCreateTooltip = (chart: ChartJS) => {
+  let tooltipEl = chart.canvas.parentNode?.querySelector("div");
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.style.background = "rgba(0, 0, 0, 0.7)";
+    tooltipEl.style.borderRadius = "3px";
+    tooltipEl.style.color = "white";
+    tooltipEl.style.opacity = "1";
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.position = "absolute";
+    tooltipEl.style.transform = "translate(-50%, 0)";
+    tooltipEl.style.transition = "all .1s ease";
+
+    const table = document.createElement("table");
+    table.style.margin = "0px";
+
+    tooltipEl.appendChild(table);
+    chart.canvas.parentNode?.appendChild(tooltipEl);
+  }
+
+  return tooltipEl;
+};
+
+const externalTooltipHandler = (context: any) => {
+  // Tooltip Element
+  const { chart, tooltip } = context;
+  const tooltipEl = getOrCreateTooltip(chart);
+
+  // Hide if no tooltip
+  if (tooltip.opacity === 0) {
+    tooltipEl.style.opacity = "0";
+    return;
+  }
+
+  // Set Text
+  if (tooltip.body) {
+    const titleLines = tooltip.title || [];
+    const indexInData = tooltip.dataPoints[0].dataIndex;
+
+    const bodyLines = [] as Array<string>;
+    if (movementsData.value) {
+      for (let asset in movementsData.value[indexInData].assets) {
+        bodyLines.push(asset);
+
+        bodyLines.push(
+          "+ : " +
+            decimalRoundWrapper(
+              movementsData.value[indexInData].assets[asset]["+"]
+            )
+        );
+
+        bodyLines.push(
+          "- : " +
+            decimalRoundWrapper(
+              -movementsData.value[indexInData].assets[asset]["-"]
+            )
+        );
+      }
+    }
+
+    const tableHead = document.createElement("thead");
+
+    titleLines.forEach((title: string) => {
+      const tr = document.createElement("tr");
+
+      const th = document.createElement("th");
+      const text = document.createTextNode(title);
+
+      th.appendChild(text);
+      tr.appendChild(th);
+      tableHead.appendChild(tr);
+    });
+
+    const tableBody = document.createElement("tbody");
+    bodyLines.forEach((body: string, i: number) => {
+      const span = document.createElement("span");
+      span.style.borderWidth = "2px";
+      span.style.marginRight = "10px";
+      span.style.height = "10px";
+      span.style.width = "10px";
+      span.style.display = "inline-block";
+
+      const tr = document.createElement("tr");
+      tr.style.backgroundColor = "inherit";
+
+      const td = document.createElement("td");
+
+      const text = document.createTextNode(body);
+
+      td.appendChild(span);
+      td.appendChild(text);
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    });
+
+    const tableRoot = tooltipEl.querySelector("table");
+
+    // Remove old children
+    while (tableRoot?.firstChild) {
+      tableRoot.firstChild.remove();
+    }
+
+    // Add new children
+    tableRoot?.appendChild(tableHead);
+    tableRoot?.appendChild(tableBody);
+  }
+
+  const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+
+  // Display, position, and set styles for font
+  tooltipEl.style.opacity = "1";
+  tooltipEl.style.left = positionX + tooltip.caretX + "px";
+  tooltipEl.style.top = positionY + 30 + "px";
+  tooltipEl.style.font = tooltip.options.bodyFont.string;
+  tooltipEl.style.padding =
+    tooltip.options.padding + "px " + tooltip.options.padding + "px";
+};
+
+const options = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    intersect: false,
+    mode: "index" as InteractionMode,
+  },
+  plugins: {
+    legend: { display: true },
+    tooltip: {
+      enabled: false,
+      external: externalTooltipHandler,
+    },
+  },
+  scales: {
+    x: {
+      title: {
+        display: true,
+        text: "Time",
+      },
+    },
+    y: {
+      title: {
+        display: true,
+        text: "Total Volume (USD Equivalent, current price)",
+      },
+    },
+  },
+};
 
 const { arrayOfSelectedIds } = storeToRefs(useStore());
 
@@ -239,3 +389,9 @@ const volumeData = computed(() => {
   };
 });
 </script>
+
+<style>
+.chart {
+  height: 600px;
+}
+</style>
