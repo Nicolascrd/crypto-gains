@@ -2,7 +2,8 @@
   <div v-if="isError">Error : make sure the backend is launched</div>
   <div v-else-if="isLoading">Loading...</div>
   <div v-else-if="allKeys?.length">
-    <h1>Please Select the key(s) corresponding to your desired account.</h1>
+    <h1>Key selection</h1>
+    <div>Please select the key(s) corresponding to your desired account.</div>
     <div class="table-container">
       <v-table>
         <thead class="thead">

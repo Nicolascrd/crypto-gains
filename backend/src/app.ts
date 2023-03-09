@@ -4,10 +4,10 @@ import routes from "./routes/routes.js";
 
 const app = express();
 
-process.env.TZ = "Etc/GMT"
+process.env.TZ = "Etc/GMT";
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: ["http://localhost:5173", "http://127.0.0.1:5173"] }));
 
 app.use("/", routes);
 
-export default app
+export default app;

@@ -1,9 +1,8 @@
 <template>
-  <h1 v-if="isLoadingBalance">Current Balance loading..."</h1>
-  <h1 v-else-if="isErrorBalance">Current Balance : Error</h1>
-  <h1 v-else-if="isSuccessBalance">Current Balance :</h1>
+  <h1>Balance</h1>
+  <div v-if="isLoadingBalance">Current Balance loading..."</div>
+  <div v-else-if="isErrorBalance">Error</div>
   <div>
-    <h3>Accounts :</h3>
     <v-chip-group filter multiple v-model="selectedAccounts">
       <v-chip v-for="id of arrayOfSelectedIds" :key="id">{{
         accountNames.get(id)
