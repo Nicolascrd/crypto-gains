@@ -1,4 +1,4 @@
-import { MainClient } from "binance";
+import { MainClient, CurrentAvgPrice } from "binance";
 import { publicAndSecretKey } from "./dbController.js";
 import { GetAccount } from "../interfaces.js";
 
@@ -51,7 +51,7 @@ export const getPrices = (tickers: {
   BUSDtickers: string[];
 }) => {
   const client = new MainClient({});
-  const promises = [];
+  const promises: Promise<CurrentAvgPrice>[] = [];
 
   for (const t of tickers.USDTtickers) {
     promises.push(client.getAvgPrice({ symbol: t + "USDT" }));

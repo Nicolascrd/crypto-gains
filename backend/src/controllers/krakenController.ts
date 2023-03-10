@@ -40,7 +40,7 @@ export const getAccount = async (id: number) => {
 
 export const getPrices = (tickers: string[]) => {
   const client = new KrakenClient("", "");
-  const promises = [];
+  const promises: Promise<any>[] = [];
   for (const t of tickers) {
     promises.push(
       client.publicMethod("Ticker", { pair: t + "USD" }, () => undefined)

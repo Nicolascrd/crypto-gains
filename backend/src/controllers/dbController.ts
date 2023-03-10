@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, depositsWithdrawals, Prisma } from "@prisma/client";
 import { params } from "../params/exchangeSpecifics.js";
 
 const prisma = new PrismaClient();
@@ -111,7 +111,10 @@ export const publicAndSecretKey = async (id: number) => {
 export const addRecords = async (recordsArr: IDepositRecord[]) => {
   // const db = await newDbConnector();
 
-  const depositsArray = [];
+  const depositsArray: Prisma.Prisma__depositsWithdrawalsClient<
+    depositsWithdrawals,
+    never
+  >[] = [];
   for (let i = 0; i < recordsArr.length; i++) {
     depositsArray.push(
       prisma.depositsWithdrawals.upsert({

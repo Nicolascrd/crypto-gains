@@ -22,6 +22,7 @@ import { Request, Response } from "express";
 import { params } from "../params/exchangeSpecifics.js";
 import { dateParams } from "./../params/dates.js";
 import { formatToTimeframe, groupAll, mergeBalances } from "./utils.js";
+import { GetAccount } from "../interfaces.js";
 
 // An import assertion in a dynamic import
 
@@ -123,7 +124,7 @@ export const balance = async (req: Request, res: Response) => {
     return;
   }
 
-  const promises = [];
+  const promises: Promise<GetAccount>[] = [];
 
   for (const id of req.body) {
     const idInt = parseInt(id);
@@ -166,9 +167,9 @@ export const prices = async (req: Request, res: Response) => {
     return;
   }
   // get all prices available on Binance, then the rest on Kraken
-  const binanceUSDTArrayOfTickers = [];
-  const binanceBUSDArrayOfTickers = [];
-  const krakenArrayOfTickers = [];
+  const binanceUSDTArrayOfTickers: string[] = [];
+  const binanceBUSDArrayOfTickers: string[] = [];
+  const krakenArrayOfTickers: string[] = [];
 
   for (const t of req.body) {
     if (params.binanceUSDTPairs.includes(t)) {
